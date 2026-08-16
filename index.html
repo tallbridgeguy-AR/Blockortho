@@ -9,7 +9,6 @@
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      /* Prevents touch selection flickering on mobile */
       -webkit-touch-callout: none;
       -webkit-user-select: none;
       user-select: none;
@@ -29,7 +28,7 @@
       display: flex;
       flex-direction: row;
       gap: 15px;
-      max-width: 1000px;
+      max-width: 1050px;
       margin: 0 auto;
     }
     @media (max-width: 768px) {
@@ -65,7 +64,6 @@
       border: 1px dashed #ccc;
       border-radius: 4px;
       cursor: crosshair;
-      /* Prevents iPad drag/scroll gesture while drawing */
       touch-action: none; 
     }
     .grid-box {
@@ -73,21 +71,39 @@
       flex-direction: column;
       align-items: center;
     }
+    .grid-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 160px;
+      margin-bottom: 5px;
+    }
     .grid-title {
       font-weight: bold;
-      margin-bottom: 5px;
       text-transform: uppercase;
       font-size: 0.85rem;
       letter-spacing: 0.5px;
+    }
+    .mini-btn {
+      padding: 2px 6px;
+      background-color: #718096;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .mini-btn:hover {
+      background-color: #4a5568;
     }
     .controls {
       margin-top: 15px;
       display: flex;
       gap: 10px;
     }
-    button {
-      padding: 10px 18px;
-      background-color: #e53e3e;
+    button.main-btn {
+      padding: 10px 16px;
       color: white;
       border: none;
       border-radius: 6px;
@@ -95,8 +111,17 @@
       font-size: 0.9rem;
       cursor: pointer;
     }
-    button:active {
-      background-color: #c53030;
+    .check-btn { background-color: #38a169; }
+    .check-btn:hover { background-color: #2f855a; }
+    .clear-btn { background-color: #e53e3e; }
+    .clear-btn:hover { background-color: #c53030; }
+    
+    #feedback {
+      margin-top: 10px;
+      font-weight: bold;
+      font-size: 0.95rem;
+      text-align: center;
+      min-height: 24px;
     }
   </style>
 </head>
@@ -107,41 +132,61 @@
   <div class="app-container">
     <!-- Left Panel: Solid Reference -->
     <div class="panel left-panel">
-      <div class="grid-title">Solid Block Reference</div>
-      <canvas id="isoCanvas" width="300" height="300"></canvas>
+      <div class="grid-title" style="margin-bottom: 5px;">Solid Block Reference</div>
+      <canvas id="isoCanvas" width="320" height="300"></canvas>
+      <div id="feedback"></div>
       <div class="controls">
-        <button id="clearAllBtn">Reset Drawing</button>
+        <button id="checkBtn" class="main-btn check-btn">Check Answer</button>
+        <button id="clearAllBtn" class="main-btn clear-btn">Reset All</button>
       </div>
     </div>
 
-    <!-- Right Panel: Orthographic Grid Area -->
+    <!-- Right Panel: Orthographic Grids -->
     <div class="panel right-panel">
+      <!-- Top View -->
       <div class="grid-box">
-        <div class="grid-title">Top View</div>
+        <div class="grid-header">
+          <span class="grid-title" style="color: #2b6cb0;">Top View</span>
+          <button class="mini-btn" onclick="topGrid.undo()">Undo</button>
+        </div>
         <canvas id="topCanvas" width="160" height="160"></canvas>
       </div>
-      <div class="grid-box" style="justify-content: center; text-align: center; color: #777; font-size: 0.75rem;">
-        <p>Touch or click dots to draw.</p>
+
+      <!-- Info panel -->
+      <div class="grid-box" style="justify-content: center; text-align: center; color: #555; font-size: 0.75rem;">
+        <p><strong>Instructions:</strong></p>
+        <p>Drag dots to draw lines.</p>
+        <p>Use <strong>Undo</strong> if you make a mistake.</p>
       </div>
+
+      <!-- Front View -->
       <div class="grid-box">
-        <div class="grid-title">Front View</div>
+        <div class="grid-header">
+          <span class="grid-title" style="color: #c53030;">Front View</span>
+          <button class="mini-btn" onclick="frontGrid.undo()">Undo</button>
+        </div>
         <canvas id="frontCanvas" width="160" height="160"></canvas>
       </div>
+
+      <!-- Right View -->
       <div class="grid-box">
-        <div class="grid-title">Right View</div>
+        <div class="grid-header">
+          <span class="grid-title" style="color: #d69e2e;">Right View</span>
+          <button class="mini-btn" onclick="rightGrid.undo()">Undo</button>
+        </div>
         <canvas id="rightCanvas" width="160" height="160"></canvas>
       </div>
     </div>
   </div>
 
   <script>
-    // 3D Isometric Reference Rendering
+    // --- 1. Isometric Canvas Setup with Color Coding & Arrow ---
     const isoCanvas = document.getElementById('isoCanvas');
     const isoCtx = isoCanvas.getContext('2d');
 
     function drawIsometricBlock() {
       isoCtx.clearRect(0, 0, isoCanvas.width, isoCanvas.height);
-      const cx = 150, cy = 210, scale = 24;
+      const cx = 150, cy = 200, scale = 25;
 
       function project(x, y, z) {
         return {
@@ -150,34 +195,71 @@
         };
       }
 
-      const polygons = [
-        { pts: [[0,0,0], [2,0,0], [2,2,0], [0,2,0]], color: '#e0e0e0' },
-        { pts: [[0,0,0], [2,0,0], [2,0,2], [0,0,2]], color: '#ffffff' },
-        { pts: [[0,0,2], [2,0,2], [2,2,2], [0,2,2]], color: '#f0f0f0' },
-        { pts: [[0,2,2], [2,2,2], [2,2,4], [0,2,4]], color: '#ffffff' },
-        { pts: [[0,2,4], [2,2,4], [2,4,4], [0,4,4]], color: '#f5f5f5' },
-        { pts: [[2,0,0], [2,2,0], [2,2,2], [2,0,2]], color: '#cccccc' },
-        { pts: [[2,2,0], [2,4,0], [2,4,4], [2,2,4]], color: '#cccccc' }
+      // Faces labeled by direction
+      const faces = [
+        // Front Faces (Red Tint)
+        { pts: [[0,0,0], [2,0,0], [2,0,2], [0,0,2]], color: '#feb2b2', label: 'FRONT' },
+        { pts: [[0,2,2], [2,2,2], [2,2,4], [0,2,4]], color: '#feb2b2', label: 'FRONT' },
+        
+        // Top Faces (Blue Tint)
+        { pts: [[0,0,2], [2,0,2], [2,2,2], [0,2,2]], color: '#bee3f8', label: 'TOP' },
+        { pts: [[0,2,4], [2,2,4], [2,4,4], [0,4,4]], color: '#bee3f8', label: 'TOP' },
+        
+        // Right Faces (Yellow/Orange Tint)
+        { pts: [[2,0,0], [2,2,0], [2,2,2], [2,0,2]], color: '#fefcbf', label: 'RIGHT' },
+        { pts: [[2,2,0], [2,4,0], [2,4,4], [2,2,4]], color: '#fefcbf', label: 'RIGHT' }
       ];
 
-      polygons.forEach(poly => {
+      // Draw faces & labels
+      faces.forEach(f => {
         isoCtx.beginPath();
-        poly.pts.forEach((pt, idx) => {
+        let midX = 0, midY = 0;
+        f.pts.forEach((pt, idx) => {
           const p = project(pt[0], pt[1], pt[2]);
+          midX += p.x; midY += p.y;
           if (idx === 0) isoCtx.moveTo(p.x, p.y);
           else isoCtx.lineTo(p.x, p.y);
         });
         isoCtx.closePath();
-        isoCtx.fillStyle = poly.color;
+        isoCtx.fillStyle = f.color;
         isoCtx.fill();
         isoCtx.strokeStyle = '#222';
         isoCtx.lineWidth = 2;
         isoCtx.stroke();
+
+        // Label text on face center
+        midX /= f.pts.length;
+        midY /= f.pts.length;
+        isoCtx.fillStyle = '#2d3748';
+        isoCtx.font = 'bold 9px sans-serif';
+        isoCtx.textAlign = 'center';
+        isoCtx.fillText(f.label, midX, midY + 3);
       });
+
+      // Draw FRONT Arrow Pointer
+      const arrowStart = project(1, -1.2, 0);
+      const arrowEnd = project(1, -0.2, 0);
+      
+      isoCtx.strokeStyle = '#e53e3e';
+      isoCtx.fillStyle = '#e53e3e';
+      isoCtx.lineWidth = 3;
+      isoCtx.beginPath();
+      isoCtx.moveTo(arrowStart.x, arrowStart.y);
+      isoCtx.lineTo(arrowEnd.x, arrowEnd.y);
+      isoCtx.stroke();
+
+      // Arrow head
+      isoCtx.beginPath();
+      isoCtx.arc(arrowEnd.x, arrowEnd.y, 4, 0, Math.PI * 2);
+      isoCtx.fill();
+
+      // Arrow text
+      isoCtx.font = 'bold 12px sans-serif';
+      isoCtx.fillText('FRONT VIEW', arrowStart.x - 20, arrowStart.y + 15);
     }
     drawIsometricBlock();
 
-    // Cross-Platform Drawing Grid (Mouse + Touch / Apple Pencil)
+    // --- 2. Grid Drawing Logic & Undo Engine ---
     const GRID_SPACING = 20;
     const GRID_ROWS = 7;
     const GRID_COLS = 7;
@@ -192,12 +274,10 @@
         this.startPoint = null;
         this.currentPoint = null;
 
-        // Mouse Listeners
         this.canvas.addEventListener('mousedown', this.start.bind(this));
         this.canvas.addEventListener('mousemove', this.move.bind(this));
         this.canvas.addEventListener('mouseup', this.end.bind(this));
 
-        // Touch Listeners (for iPad / Touchscreen)
         this.canvas.addEventListener('touchstart', this.start.bind(this), { passive: false });
         this.canvas.addEventListener('touchmove', this.move.bind(this), { passive: false });
         this.canvas.addEventListener('touchend', this.end.bind(this), { passive: false });
@@ -207,23 +287,17 @@
 
       getPos(e) {
         const rect = this.canvas.getBoundingClientRect();
-        let clientX = e.clientX;
-        let clientY = e.clientY;
+        let clientX = e.clientX, clientY = e.clientY;
 
-        // Use touch coordinate if available
         if (e.touches && e.touches.length > 0) {
           clientX = e.touches[0].clientX;
           clientY = e.touches[0].clientY;
         }
 
-        const rawX = clientX - rect.left;
-        const rawY = clientY - rect.top;
+        const col = Math.max(0, Math.min(GRID_COLS - 1, Math.round((clientX - rect.left - OFFSET) / GRID_SPACING)));
+        const row = Math.max(0, Math.min(GRID_ROWS - 1, Math.round((clientY - rect.top - OFFSET) / GRID_SPACING)));
 
-        // Snap to grid
-        const col = Math.max(0, Math.min(GRID_COLS - 1, Math.round((rawX - OFFSET) / GRID_SPACING)));
-        const row = Math.max(0, Math.min(GRID_ROWS - 1, Math.round((rawY - OFFSET) / GRID_SPACING)));
-
-        return { x: OFFSET + col * GRID_SPACING, y: OFFSET + row * GRID_SPACING };
+        return { col, row, x: OFFSET + col * GRID_SPACING, y: OFFSET + row * GRID_SPACING };
       }
 
       start(e) {
@@ -242,12 +316,17 @@
 
       end(e) {
         if (this.isDrawing) {
-          if (this.startPoint.x !== this.currentPoint.x || this.startPoint.y !== this.currentPoint.y) {
+          if (this.startPoint.col !== this.currentPoint.col || this.startPoint.row !== this.currentPoint.row) {
             this.lines.push({ p1: this.startPoint, p2: this.currentPoint });
           }
           this.isDrawing = false;
           this.render();
         }
+      }
+
+      undo() {
+        this.lines.pop();
+        this.render();
       }
 
       clear() {
@@ -258,7 +337,7 @@
       render() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-        // Draw Dot Grid
+        // Grid Dots
         for (let r = 0; r < GRID_ROWS; r++) {
           for (let c = 0; c < GRID_COLS; c++) {
             this.ctx.beginPath();
@@ -268,18 +347,18 @@
           }
         }
 
-        // Draw User Lines
+        // Lines
         this.ctx.strokeStyle = '#000';
         this.ctx.lineWidth = 3;
         this.ctx.lineCap = 'round';
-        this.lines.forEach(line => {
+        this.lines.forEach(l => {
           this.ctx.beginPath();
-          this.ctx.moveTo(line.p1.x, line.p1.y);
-          this.ctx.lineTo(line.p2.x, line.p2.y);
+          this.ctx.moveTo(l.p1.x, l.p1.y);
+          this.ctx.lineTo(l.p2.x, l.p2.y);
           this.ctx.stroke();
         });
 
-        // Active rubber-band line
+        // Rubberband line
         if (this.isDrawing) {
           this.ctx.strokeStyle = '#0066cc';
           this.ctx.beginPath();
@@ -294,10 +373,76 @@
     const frontGrid = new DrawingGrid('frontCanvas');
     const rightGrid = new DrawingGrid('rightCanvas');
 
+    // --- 3. Solution Verification Engine ---
+    // Defined grid coordinates (col, row)
+    const TARGET_SOLUTIONS = {
+      top: [
+        // Outer rectangle
+        [[1,1],[3,1]], [[3,1],[3,5]], [[3,5],[1,5]], [[1,5],[1,1]],
+        // Inner divider step line
+        [[1,3],[3,3]]
+      ],
+      front: [
+        // Stepped profile
+        [[1,5],[3,5]], [[3,5],[3,1]], [[3,1],[2,1]],
+        [[2,1],[2,3]], [[2,3],[1,3]], [[1,3],[1,5]],
+        // Step line
+        [[2,3],[3,3]]
+      ],
+      right: [
+        // Outer rectangle
+        [[1,1],[5,1]], [[5,1],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]],
+        // Step line
+        [[1,3],[5,3]]
+      ]
+    };
+
+    function normalizeSegment(p1, p2) {
+      // Sorts line coordinates so segment direction (A->B or B->A) doesn't matter
+      if (p1.col < p2.col || (p1.col === p2.col && p1.row < p2.row)) {
+        return `${p1.col},${p1.row}-${p2.col},${p2.row}`;
+      }
+      return `${p2.col},${p2.row}-${p1.col},${p1.row}`;
+    }
+
+    function checkAnswer() {
+      const checkView = (userLines, targetLines) => {
+        const userSet = new Set(userLines.map(l => normalizeSegment(l.p1, l.p2)));
+        const targetSet = new Set(targetLines.map(l => normalizeSegment({col: l[0][0], row: l[0][1]}, {col: l[1][0], row: l[1][1]})));
+
+        if (userSet.size !== targetSet.size) return false;
+        for (let seg of userSet) {
+          if (!targetSet.has(seg)) return false;
+        }
+        return true;
+      };
+
+      const topOk = checkView(topGrid.lines, TARGET_SOLUTIONS.top);
+      const frontOk = checkView(frontGrid.lines, TARGET_SOLUTIONS.front);
+      const rightOk = checkView(rightGrid.lines, TARGET_SOLUTIONS.right);
+
+      const feedback = document.getElementById('feedback');
+
+      if (topOk && frontOk && rightOk) {
+        feedback.style.color = '#2f855a';
+        feedback.innerText = '🎉 Correct! All views drawn properly.';
+      } else {
+        feedback.style.color = '#c53030';
+        let errors = [];
+        if (!topOk) errors.push('Top');
+        if (!frontOk) errors.push('Front');
+        if (!rightOk) errors.push('Right');
+        feedback.innerText = '❌ Incorrect view(s): ' + errors.join(', ');
+      }
+    }
+
+    // Button Handlers
+    document.getElementById('checkBtn').addEventListener('click', checkAnswer);
     document.getElementById('clearAllBtn').addEventListener('click', () => {
       topGrid.clear();
       frontGrid.clear();
       rightGrid.clear();
+      document.getElementById('feedback').innerText = '';
     });
   </script>
 </body>
