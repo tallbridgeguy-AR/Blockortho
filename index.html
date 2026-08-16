@@ -63,8 +63,13 @@
       background-color: #fafafa;
       border: 1px dashed #ccc;
       border-radius: 4px;
-      cursor: crosshair;
       touch-action: none; 
+    }
+    #isoCanvas {
+      cursor: grab;
+    }
+    #isoCanvas:active {
+      cursor: grabbing;
     }
     .grid-box {
       display: flex;
@@ -115,6 +120,8 @@
     .check-btn:hover { background-color: #2f855a; }
     .clear-btn { background-color: #e53e3e; }
     .clear-btn:hover { background-color: #c53030; }
+    .reset-cam-btn { background-color: #4a5568; }
+    .reset-cam-btn:hover { background-color: #2d3748; }
     
     #feedback {
       margin-top: 10px;
@@ -130,14 +137,15 @@
   <h1>Orthographic Drawing Practice Tool</h1>
 
   <div class="app-container">
-    <!-- Left Panel: Solid Reference -->
+    <!-- Left Panel: Rotatable 3D Solid Reference -->
     <div class="panel left-panel">
       <div class="grid-title" style="margin-bottom: 5px;">Solid Block Reference</div>
       <canvas id="isoCanvas" width="320" height="300"></canvas>
       <div id="feedback"></div>
       <div class="controls">
         <button id="checkBtn" class="main-btn check-btn">Check Answer</button>
-        <button id="clearAllBtn" class="main-btn clear-btn">Reset All</button>
+        <button id="clearAllBtn" class="main-btn clear-btn">Reset Drawing</button>
+        <button id="resetCamBtn" class="main-btn reset-cam-btn">Reset View</button>
       </div>
     </div>
 
@@ -155,8 +163,8 @@
       <!-- Info panel -->
       <div class="grid-box" style="justify-content: center; text-align: center; color: #555; font-size: 0.75rem;">
         <p><strong>Instructions:</strong></p>
-        <p>Drag dots to draw lines.</p>
-        <p>Use <strong>Undo</strong> if you make a mistake.</p>
+        <p>Drag on the left block to spin it in 3D.</p>
+        <p>Drag dots on grids to draw lines.</p>
       </div>
 
       <!-- Front View -->
@@ -180,86 +188,187 @@
   </div>
 
   <script>
-    // --- 1. Isometric Canvas Setup with Color Coding & Arrow ---
+    // --- 1. True 3D Solid Engine with Rotatable View ---
     const isoCanvas = document.getElementById('isoCanvas');
     const isoCtx = isoCanvas.getContext('2d');
 
+    // Default isometric camera angles
+    const DEFAULT_ROT_X = 0.5;
+    const DEFAULT_ROT_Y = -0.6;
+
+    let rotX = DEFAULT_ROT_X;
+    let rotY = DEFAULT_ROT_Y;
+    let isDraggingCam = false;
+    let lastMouseX = 0, lastMouseY = 0;
+
+    // Define 3D Mesh for Solid Step Block (centered at origin)
+    const rawPolygons = [
+      // Bottom face
+      { pts: [[-1,0,-2], [1,0,-2], [1,0,2], [-1,0,2]], color: '#cbd5e0', label: '' },
+      // Back face
+      { pts: [[-1,0,-2], [1,0,-2], [1,4,-2], [-1,4,-2]], color: '#a0aec0', label: '' },
+      // Front lower face (FRONT)
+      { pts: [[-1,0,2], [1,0,2], [1,2,2], [-1,2,2]], color: '#feb2b2', norm: [0,0,1] },
+      // Step riser face (FRONT)
+      { pts: [[-1,2,0], [1,2,0], [1,4,0], [-1,4,0]], color: '#feb2b2', norm: [0,0,1] },
+      // Step tread face (TOP)
+      { pts: [[-1,2,0], [1,2,0], [1,2,2], [-1,2,2]], color: '#bee3f8', norm: [0,1,0] },
+      // Top tread face (TOP)
+      { pts: [[-1,4,-2], [1,4,-2], [1,4,0], [-1,4,0]], color: '#bee3f8', norm: [0,1,0] },
+      // Left side face (full profile)
+      { pts: [[-1,0,-2], [-1,0,2], [-1,2,2], [-1,2,0], [-1,4,0], [-1,4,-2]], color: '#e2e8f0', label: '' },
+      // Right lower face (RIGHT)
+      { pts: [[1,0,0], [1,0,2], [1,2,2], [1,2,0]], color: '#fefcbf', norm: [1,0,0] },
+      // Right upper face (RIGHT)
+      { pts: [[1,0,-2], [1,0,0], [1,4,0], [1,4,-2]], color: '#fefcbf', norm: [1,0,0] }
+    ];
+
+    function rotate3D(x, y, z, rx, ry) {
+      // Y-axis rotation
+      let x1 = x * Math.cos(ry) + z * Math.sin(ry);
+      let z1 = -x * Math.sin(ry) + z * Math.cos(ry);
+      let y1 = y;
+
+      // X-axis rotation
+      let y2 = y1 * Math.cos(rx) - z1 * Math.sin(rx);
+      let z2 = y1 * Math.sin(rx) + z1 * Math.cos(rx);
+
+      return { x: x1, y: y2, z: z2 };
+    }
+
     function drawIsometricBlock() {
       isoCtx.clearRect(0, 0, isoCanvas.width, isoCanvas.height);
-      const cx = 150, cy = 200, scale = 25;
+      const cx = isoCanvas.width / 2;
+      const cy = isoCanvas.height / 2 + 20;
+      const scale = 32;
 
-      function project(x, y, z) {
+      // Project & calculate face depths for painter's algorithm
+      let projectedPolys = rawPolygons.map(poly => {
+        let transformedPts = poly.pts.map(pt => {
+          let r = rotate3D(pt[0], pt[1], pt[2], rotX, rotY);
+          return {
+            x: cx + r.x * scale,
+            y: cy - r.y * scale,
+            z: r.z
+          };
+        });
+
+        // Average Z-depth for sorting back-to-front
+        let avgZ = transformedPts.reduce((sum, p) => sum + p.z, 0) / transformedPts.length;
+
         return {
-          x: cx + (x - y) * Math.cos(Math.PI / 6) * scale,
-          y: cy - z * scale + (x + y) * Math.sin(Math.PI / 6) * scale
+          pts: transformedPts,
+          color: poly.color,
+          avgZ: avgZ
         };
-      }
+      });
 
-      // Faces labeled by direction
-      const faces = [
-        // Front Faces (Red Tint)
-        { pts: [[0,0,0], [2,0,0], [2,0,2], [0,0,2]], color: '#feb2b2', label: 'FRONT' },
-        { pts: [[0,2,2], [2,2,2], [2,2,4], [0,2,4]], color: '#feb2b2', label: 'FRONT' },
-        
-        // Top Faces (Blue Tint)
-        { pts: [[0,0,2], [2,0,2], [2,2,2], [0,2,2]], color: '#bee3f8', label: 'TOP' },
-        { pts: [[0,2,4], [2,2,4], [2,4,4], [0,4,4]], color: '#bee3f8', label: 'TOP' },
-        
-        // Right Faces (Yellow/Orange Tint)
-        { pts: [[2,0,0], [2,2,0], [2,2,2], [2,0,2]], color: '#fefcbf', label: 'RIGHT' },
-        { pts: [[2,2,0], [2,4,0], [2,4,4], [2,2,4]], color: '#fefcbf', label: 'RIGHT' }
-      ];
+      // Sort faces back-to-front (solid occlusion)
+      projectedPolys.sort((a, b) => a.avgZ - b.avgZ);
 
-      // Draw faces & labels
-      faces.forEach(f => {
+      // Render solid faces
+      projectedPolys.forEach(poly => {
         isoCtx.beginPath();
-        let midX = 0, midY = 0;
-        f.pts.forEach((pt, idx) => {
-          const p = project(pt[0], pt[1], pt[2]);
-          midX += p.x; midY += p.y;
+        poly.pts.forEach((p, idx) => {
           if (idx === 0) isoCtx.moveTo(p.x, p.y);
           else isoCtx.lineTo(p.x, p.y);
         });
         isoCtx.closePath();
-        isoCtx.fillStyle = f.color;
+        isoCtx.fillStyle = poly.color;
         isoCtx.fill();
-        isoCtx.strokeStyle = '#222';
+        isoCtx.strokeStyle = '#1a202c';
         isoCtx.lineWidth = 2;
         isoCtx.stroke();
-
-        // Label text on face center
-        midX /= f.pts.length;
-        midY /= f.pts.length;
-        isoCtx.fillStyle = '#2d3748';
-        isoCtx.font = 'bold 9px sans-serif';
-        isoCtx.textAlign = 'center';
-        isoCtx.fillText(f.label, midX, midY + 3);
       });
 
-      // Draw FRONT Arrow Pointer
-      const arrowStart = project(1, -1.2, 0);
-      const arrowEnd = project(1, -0.2, 0);
-      
-      isoCtx.strokeStyle = '#e53e3e';
-      isoCtx.fillStyle = '#e53e3e';
-      isoCtx.lineWidth = 3;
-      isoCtx.beginPath();
-      isoCtx.moveTo(arrowStart.x, arrowStart.y);
-      isoCtx.lineTo(arrowEnd.x, arrowEnd.y);
-      isoCtx.stroke();
-
-      // Arrow head
-      isoCtx.beginPath();
-      isoCtx.arc(arrowEnd.x, arrowEnd.y, 4, 0, Math.PI * 2);
-      isoCtx.fill();
-
-      // Arrow text
-      isoCtx.font = 'bold 12px sans-serif';
-      isoCtx.fillText('FRONT VIEW', arrowStart.x - 20, arrowStart.y + 15);
+      // Render Clear External Labels around Model
+      drawViewLabels(cx, cy, scale);
     }
+
+    function drawViewLabels(cx, cy, scale) {
+      // Position indicators clearly outside the block in 3D space
+      const labels = [
+        { text: 'FRONT VIEW →', pos: [0, 1, 3.8], color: '#c53030' },
+        { text: 'TOP VIEW ↓', pos: [0, 5.2, -1], color: '#2b6cb0' },
+        { text: '← RIGHT VIEW', pos: [3.2, 1, 0], color: '#d69e2e' }
+      ];
+
+      isoCtx.font = 'bold 12px sans-serif';
+      isoCtx.textAlign = 'center';
+
+      labels.forEach(lbl => {
+        let p = rotate3D(lbl.pos[0], lbl.pos[1], lbl.pos[2], rotX, rotY);
+        let screenX = cx + p.x * scale;
+        let screenY = cy - p.y * scale;
+
+        // Label background badge
+        isoCtx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+        let textWidth = isoCtx.measureText(lbl.text).width;
+        isoCtx.fillRect(screenX - textWidth/2 - 4, screenY - 10, textWidth + 8, 16);
+
+        // Label text
+        isoCtx.fillStyle = lbl.color;
+        isoCtx.fillText(lbl.text, screenX, screenY + 2);
+      });
+    }
+
+    // Camera Interaction Handlers (Mouse & Touch Drag to Rotate)
+    function startCamDrag(e) {
+      isDraggingCam = true;
+      let pos = getEventPos(e);
+      lastMouseX = pos.x;
+      lastMouseY = pos.y;
+    }
+
+    function moveCamDrag(e) {
+      if (!isDraggingCam) return;
+      let pos = getEventPos(e);
+      let dx = pos.x - lastMouseX;
+      let dy = pos.y - lastMouseY;
+
+      rotY += dx * 0.01;
+      rotX += dy * 0.01;
+
+      // Limit vertical rotation to prevent flipping
+      rotX = Math.max(-1.2, Math.min(1.2, rotX));
+
+      lastMouseX = pos.x;
+      lastMouseY = pos.y;
+
+      drawIsometricBlock();
+    }
+
+    function endCamDrag() {
+      isDraggingCam = false;
+    }
+
+    function getEventPos(e) {
+      let rect = isoCanvas.getBoundingClientRect();
+      let clientX = e.clientX, clientY = e.clientY;
+      if (e.touches && e.touches.length > 0) {
+        clientX = e.touches[0].clientX;
+        clientY = e.touches[0].clientY;
+      }
+      return { x: clientX - rect.left, y: clientY - rect.top };
+    }
+
+    isoCanvas.addEventListener('mousedown', startCamDrag);
+    window.addEventListener('mousemove', moveCamDrag);
+    window.addEventListener('mouseup', endCamDrag);
+
+    isoCanvas.addEventListener('touchstart', startCamDrag, { passive: false });
+    window.addEventListener('touchmove', moveCamDrag, { passive: false });
+    window.addEventListener('touchend', endCamDrag, { passive: false });
+
+    document.getElementById('resetCamBtn').addEventListener('click', () => {
+      rotX = DEFAULT_ROT_X;
+      rotY = DEFAULT_ROT_Y;
+      drawIsometricBlock();
+    });
+
     drawIsometricBlock();
 
-    // --- 2. Grid Drawing Logic & Undo Engine ---
+    // --- 2. Interactive Grid Drawing Engine ---
     const GRID_SPACING = 20;
     const GRID_ROWS = 7;
     const GRID_COLS = 7;
@@ -337,7 +446,7 @@
       render() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-        // Grid Dots
+        // Dot Grid
         for (let r = 0; r < GRID_ROWS; r++) {
           for (let c = 0; c < GRID_COLS; c++) {
             this.ctx.beginPath();
@@ -358,7 +467,7 @@
           this.ctx.stroke();
         });
 
-        // Rubberband line
+        // Rubberband line preview
         if (this.isDrawing) {
           this.ctx.strokeStyle = '#0066cc';
           this.ctx.beginPath();
@@ -374,31 +483,23 @@
     const rightGrid = new DrawingGrid('rightCanvas');
 
     // --- 3. Solution Verification Engine ---
-    // Defined grid coordinates (col, row)
     const TARGET_SOLUTIONS = {
       top: [
-        // Outer rectangle
         [[1,1],[3,1]], [[3,1],[3,5]], [[3,5],[1,5]], [[1,5],[1,1]],
-        // Inner divider step line
         [[1,3],[3,3]]
       ],
       front: [
-        // Stepped profile
         [[1,5],[3,5]], [[3,5],[3,1]], [[3,1],[2,1]],
         [[2,1],[2,3]], [[2,3],[1,3]], [[1,3],[1,5]],
-        // Step line
         [[2,3],[3,3]]
       ],
       right: [
-        // Outer rectangle
         [[1,1],[5,1]], [[5,1],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]],
-        // Step line
         [[1,3],[5,3]]
       ]
     };
 
     function normalizeSegment(p1, p2) {
-      // Sorts line coordinates so segment direction (A->B or B->A) doesn't matter
       if (p1.col < p2.col || (p1.col === p2.col && p1.row < p2.row)) {
         return `${p1.col},${p1.row}-${p2.col},${p2.row}`;
       }
@@ -436,7 +537,6 @@
       }
     }
 
-    // Button Handlers
     document.getElementById('checkBtn').addEventListener('click', checkAnswer);
     document.getElementById('clearAllBtn').addEventListener('click', () => {
       topGrid.clear();
