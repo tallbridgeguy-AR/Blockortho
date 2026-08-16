@@ -130,6 +130,17 @@
       text-align: center;
       min-height: 24px;
     }
+
+    .scale-info {
+      background-color: #edf2f7;
+      border-radius: 6px;
+      padding: 8px 12px;
+      margin-top: 8px;
+      font-size: 0.8rem;
+      text-align: center;
+      color: #2d3748;
+      width: 100%;
+    }
   </style>
 </head>
 <body>
@@ -141,7 +152,13 @@
     <div class="panel left-panel">
       <div class="grid-title" style="margin-bottom: 5px;">Solid Block Reference</div>
       <canvas id="isoCanvas" width="320" height="300"></canvas>
+      
+      <div class="scale-info">
+        <strong>Scale:</strong> 1 Grid Square = 1 Unit Dimension
+      </div>
+
       <div id="feedback"></div>
+
       <div class="controls">
         <button id="checkBtn" class="main-btn check-btn">Check Answer</button>
         <button id="clearAllBtn" class="main-btn clear-btn">Reset Drawing</button>
@@ -162,9 +179,9 @@
 
       <!-- Info panel -->
       <div class="grid-box" style="justify-content: center; text-align: center; color: #555; font-size: 0.75rem;">
-        <p><strong>Instructions:</strong></p>
-        <p>Drag on the left block to spin it in 3D.</p>
-        <p>Drag dots on grids to draw lines.</p>
+        <p><strong>Scale & Drawing Instructions:</strong></p>
+        <p style="margin-top: 3px;">Count the grid squares under the block to find dimensions.</p>
+        <p style="margin-top: 3px;">Draw matching unit lengths on the dot grids (1 dot-to-dot = 1 unit).</p>
       </div>
 
       <!-- Front View -->
@@ -188,11 +205,10 @@
   </div>
 
   <script>
-    // --- 1. True 3D Solid Engine with Rotatable View ---
+    // --- 1. True 3D Engine with Floor Grid & Scaling ---
     const isoCanvas = document.getElementById('isoCanvas');
     const isoCtx = isoCanvas.getContext('2d');
 
-    // Default isometric camera angles
     const DEFAULT_ROT_X = 0.5;
     const DEFAULT_ROT_Y = -0.6;
 
@@ -201,48 +217,78 @@
     let isDraggingCam = false;
     let lastMouseX = 0, lastMouseY = 0;
 
-    // Define 3D Mesh for Solid Step Block (centered at origin)
+    // Block mesh scaled to exact grid coordinates
     const rawPolygons = [
-      // Bottom face
-      { pts: [[-1,0,-2], [1,0,-2], [1,0,2], [-1,0,2]], color: '#cbd5e0', label: '' },
-      // Back face
-      { pts: [[-1,0,-2], [1,0,-2], [1,4,-2], [-1,4,-2]], color: '#a0aec0', label: '' },
-      // Front lower face (FRONT)
-      { pts: [[-1,0,2], [1,0,2], [1,2,2], [-1,2,2]], color: '#feb2b2', norm: [0,0,1] },
-      // Step riser face (FRONT)
-      { pts: [[-1,2,0], [1,2,0], [1,4,0], [-1,4,0]], color: '#feb2b2', norm: [0,0,1] },
-      // Step tread face (TOP)
-      { pts: [[-1,2,0], [1,2,0], [1,2,2], [-1,2,2]], color: '#bee3f8', norm: [0,1,0] },
-      // Top tread face (TOP)
-      { pts: [[-1,4,-2], [1,4,-2], [1,4,0], [-1,4,0]], color: '#bee3f8', norm: [0,1,0] },
-      // Left side face (full profile)
-      { pts: [[-1,0,-2], [-1,0,2], [-1,2,2], [-1,2,0], [-1,4,0], [-1,4,-2]], color: '#e2e8f0', label: '' },
-      // Right lower face (RIGHT)
-      { pts: [[1,0,0], [1,0,2], [1,2,2], [1,2,0]], color: '#fefcbf', norm: [1,0,0] },
-      // Right upper face (RIGHT)
-      { pts: [[1,0,-2], [1,0,0], [1,4,0], [1,4,-2]], color: '#fefcbf', norm: [1,0,0] }
+      { pts: [[-1,0,-2], [1,0,-2], [1,0,2], [-1,0,2]], color: '#cbd5e0' }, // Bottom
+      { pts: [[-1,0,-2], [1,0,-2], [1,4,-2], [-1,4,-2]], color: '#a0aec0' }, // Back
+      { pts: [[-1,0,2], [1,0,2], [1,2,2], [-1,2,2]], color: '#feb2b2' }, // Front Lower
+      { pts: [[-1,2,0], [1,2,0], [1,4,0], [-1,4,0]], color: '#feb2b2' }, // Step Riser
+      { pts: [[-1,2,0], [1,2,0], [1,2,2], [-1,2,2]], color: '#bee3f8' }, // Step Tread
+      { pts: [[-1,4,-2], [1,4,-2], [1,4,0], [-1,4,0]], color: '#bee3f8' }, // Top Tread
+      { pts: [[-1,0,-2], [-1,0,2], [-1,2,2], [-1,2,0], [-1,4,0], [-1,4,-2]], color: '#e2e8f0' }, // Left
+      { pts: [[1,0,0], [1,0,2], [1,2,2], [1,2,0]], color: '#fefcbf' }, // Right Lower
+      { pts: [[1,0,-2], [1,0,0], [1,4,0], [1,4,-2]], color: '#fefcbf' }  // Right Upper
     ];
 
     function rotate3D(x, y, z, rx, ry) {
-      // Y-axis rotation
       let x1 = x * Math.cos(ry) + z * Math.sin(ry);
       let z1 = -x * Math.sin(ry) + z * Math.cos(ry);
       let y1 = y;
 
-      // X-axis rotation
       let y2 = y1 * Math.cos(rx) - z1 * Math.sin(rx);
       let z2 = y1 * Math.sin(rx) + z1 * Math.cos(rx);
 
       return { x: x1, y: y2, z: z2 };
     }
 
+    function drawFloorGrid(cx, cy, scale) {
+      const gridMinX = -3, gridMaxX = 3;
+      const gridMinZ = -3, gridMaxZ = 3;
+
+      isoCtx.strokeStyle = '#cbd5e0';
+      isoCtx.lineWidth = 1;
+
+      // Draw grid lines along X & Z on floor (Y = 0)
+      for (let x = gridMinX; x <= gridMaxX; x++) {
+        let p1 = rotate3D(x, 0, gridMinZ, rotX, rotY);
+        let p2 = rotate3D(x, 0, gridMaxZ, rotX, rotY);
+        isoCtx.beginPath();
+        isoCtx.moveTo(cx + p1.x * scale, cy - p1.y * scale);
+        isoCtx.lineTo(cx + p2.x * scale, cy - p2.y * scale);
+        isoCtx.stroke();
+      }
+
+      for (let z = gridMinZ; z <= gridMaxZ; z++) {
+        let p1 = rotate3D(gridMinX, 0, z, rotX, rotY);
+        let p2 = rotate3D(gridMaxX, 0, z, rotX, rotY);
+        isoCtx.beginPath();
+        isoCtx.moveTo(cx + p1.x * scale, cy - p1.y * scale);
+        isoCtx.lineTo(cx + p2.x * scale, cy - p2.y * scale);
+        isoCtx.stroke();
+      }
+
+      // Draw grid unit dots on intersection
+      for (let x = gridMinX; x <= gridMaxX; x++) {
+        for (let z = gridMinZ; z <= gridMaxZ; z++) {
+          let p = rotate3D(x, 0, z, rotX, rotY);
+          isoCtx.beginPath();
+          isoCtx.arc(cx + p.x * scale, cy - p.y * scale, 2, 0, Math.PI * 2);
+          isoCtx.fillStyle = '#718096';
+          isoCtx.fill();
+        }
+      }
+    }
+
     function drawIsometricBlock() {
       isoCtx.clearRect(0, 0, isoCanvas.width, isoCanvas.height);
       const cx = isoCanvas.width / 2;
-      const cy = isoCanvas.height / 2 + 20;
-      const scale = 32;
+      const cy = isoCanvas.height / 2 + 25;
+      const scale = 28;
 
-      // Project & calculate face depths for painter's algorithm
+      // Draw Base Coordinate Floor Grid first
+      drawFloorGrid(cx, cy, scale);
+
+      // Render 3D solid model over the grid
       let projectedPolys = rawPolygons.map(poly => {
         let transformedPts = poly.pts.map(pt => {
           let r = rotate3D(pt[0], pt[1], pt[2], rotX, rotY);
@@ -253,7 +299,6 @@
           };
         });
 
-        // Average Z-depth for sorting back-to-front
         let avgZ = transformedPts.reduce((sum, p) => sum + p.z, 0) / transformedPts.length;
 
         return {
@@ -263,10 +308,8 @@
         };
       });
 
-      // Sort faces back-to-front (solid occlusion)
       projectedPolys.sort((a, b) => a.avgZ - b.avgZ);
 
-      // Render solid faces
       projectedPolys.forEach(poly => {
         isoCtx.beginPath();
         poly.pts.forEach((p, idx) => {
@@ -281,12 +324,10 @@
         isoCtx.stroke();
       });
 
-      // Render Clear External Labels around Model
       drawViewLabels(cx, cy, scale);
     }
 
     function drawViewLabels(cx, cy, scale) {
-      // Position indicators clearly outside the block in 3D space
       const labels = [
         { text: 'FRONT VIEW →', pos: [0, 1, 3.8], color: '#c53030' },
         { text: 'TOP VIEW ↓', pos: [0, 5.2, -1], color: '#2b6cb0' },
@@ -301,18 +342,16 @@
         let screenX = cx + p.x * scale;
         let screenY = cy - p.y * scale;
 
-        // Label background badge
         isoCtx.fillStyle = 'rgba(255, 255, 255, 0.85)';
         let textWidth = isoCtx.measureText(lbl.text).width;
         isoCtx.fillRect(screenX - textWidth/2 - 4, screenY - 10, textWidth + 8, 16);
 
-        // Label text
         isoCtx.fillStyle = lbl.color;
         isoCtx.fillText(lbl.text, screenX, screenY + 2);
       });
     }
 
-    // Camera Interaction Handlers (Mouse & Touch Drag to Rotate)
+    // Camera Controls
     function startCamDrag(e) {
       isDraggingCam = true;
       let pos = getEventPos(e);
@@ -328,8 +367,6 @@
 
       rotY += dx * 0.01;
       rotX += dy * 0.01;
-
-      // Limit vertical rotation to prevent flipping
       rotX = Math.max(-1.2, Math.min(1.2, rotX));
 
       lastMouseX = pos.x;
@@ -456,7 +493,7 @@
           }
         }
 
-        // Lines
+        // Drawn Lines
         this.ctx.strokeStyle = '#000';
         this.ctx.lineWidth = 3;
         this.ctx.lineCap = 'round';
@@ -467,7 +504,7 @@
           this.ctx.stroke();
         });
 
-        // Rubberband line preview
+        // Rubberband line
         if (this.isDrawing) {
           this.ctx.strokeStyle = '#0066cc';
           this.ctx.beginPath();
@@ -482,7 +519,7 @@
     const frontGrid = new DrawingGrid('frontCanvas');
     const rightGrid = new DrawingGrid('rightCanvas');
 
-    // --- 3. Solution Verification Engine ---
+    // --- 3. Verification Engine ---
     const TARGET_SOLUTIONS = {
       top: [
         [[1,1],[3,1]], [[3,1],[3,5]], [[3,5],[1,5]], [[1,5],[1,1]],
@@ -526,7 +563,7 @@
 
       if (topOk && frontOk && rightOk) {
         feedback.style.color = '#2f855a';
-        feedback.innerText = '🎉 Correct! All views drawn properly.';
+        feedback.innerText = '🎉 Correct! All views drawn to scale.';
       } else {
         feedback.style.color = '#c53030';
         let errors = [];
