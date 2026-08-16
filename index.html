@@ -105,19 +105,23 @@
     .controls {
       margin-top: 15px;
       display: flex;
-      gap: 10px;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
     }
     button.main-btn {
-      padding: 10px 16px;
+      padding: 8px 14px;
       color: white;
       border: none;
       border-radius: 6px;
       font-weight: bold;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       cursor: pointer;
     }
     .check-btn { background-color: #38a169; }
     .check-btn:hover { background-color: #2f855a; }
+    .next-btn { background-color: #3182ce; }
+    .next-btn:hover { background-color: #2b6cb0; }
     .clear-btn { background-color: #e53e3e; }
     .clear-btn:hover { background-color: #c53030; }
     .reset-cam-btn { background-color: #4a5568; }
@@ -126,7 +130,7 @@
     #feedback {
       margin-top: 10px;
       font-weight: bold;
-      font-size: 0.95rem;
+      font-size: 0.9rem;
       text-align: center;
       min-height: 24px;
     }
@@ -134,7 +138,7 @@
     .scale-info {
       background-color: #edf2f7;
       border-radius: 6px;
-      padding: 8px 12px;
+      padding: 6px 12px;
       margin-top: 8px;
       font-size: 0.8rem;
       text-align: center;
@@ -150,8 +154,8 @@
   <div class="app-container">
     <!-- Left Panel: Rotatable 3D Solid Reference -->
     <div class="panel left-panel">
-      <div class="grid-title" style="margin-bottom: 5px;">Solid Block Reference</div>
-      <canvas id="isoCanvas" width="320" height="300"></canvas>
+      <div class="grid-title" id="blockTitle" style="margin-bottom: 5px;">Block 1 / 3</div>
+      <canvas id="isoCanvas" width="320" height="280"></canvas>
       
       <div class="scale-info">
         <strong>Scale:</strong> 1 Grid Square = 1 Unit Dimension
@@ -161,7 +165,8 @@
 
       <div class="controls">
         <button id="checkBtn" class="main-btn check-btn">Check Answer</button>
-        <button id="clearAllBtn" class="main-btn clear-btn">Reset Drawing</button>
+        <button id="nextBtn" class="main-btn next-btn">Next Block ➔</button>
+        <button id="clearAllBtn" class="main-btn clear-btn">Clear Drawing</button>
         <button id="resetCamBtn" class="main-btn reset-cam-btn">Reset View</button>
       </div>
     </div>
@@ -179,9 +184,9 @@
 
       <!-- Info panel -->
       <div class="grid-box" style="justify-content: center; text-align: center; color: #555; font-size: 0.75rem;">
-        <p><strong>Scale & Drawing Instructions:</strong></p>
-        <p style="margin-top: 3px;">Count the grid squares under the block to find dimensions.</p>
-        <p style="margin-top: 3px;">Draw matching unit lengths on the dot grids (1 dot-to-dot = 1 unit).</p>
+        <p><strong>Instructions:</strong></p>
+        <p style="margin-top: 3px;">Drag dots to draw orthographic views.</p>
+        <p style="margin-top: 3px;">Click <strong>Check Answer</strong> to reveal correct lines in <span style="color:#38a169; font-weight:bold;">GREEN</span>.</p>
       </div>
 
       <!-- Front View -->
@@ -205,39 +210,87 @@
   </div>
 
   <script>
-    // --- 1. True 3D Engine with Floor Grid & Scaling ---
+    // --- 1. Block Models Database ---
+    const BLOCKS = [
+      // Block 0: Stepped Block
+      {
+        name: "Block 1: Step Block",
+        rawPolygons: [
+          { pts: [[-1,0,-2], [1,0,-2], [1,0,2], [-1,0,2]], color: '#cbd5e0' },
+          { pts: [[-1,0,-2], [1,0,-2], [1,4,-2], [-1,4,-2]], color: '#a0aec0' },
+          { pts: [[-1,0,2], [1,0,2], [1,2,2], [-1,2,2]], color: '#feb2b2' },
+          { pts: [[-1,2,0], [1,2,0], [1,4,0], [-1,4,0]], color: '#feb2b2' },
+          { pts: [[-1,2,0], [1,2,0], [1,2,2], [-1,2,2]], color: '#bee3f8' },
+          { pts: [[-1,4,-2], [1,4,-2], [1,4,0], [-1,4,0]], color: '#bee3f8' },
+          { pts: [[-1,0,-2], [-1,0,2], [-1,2,2], [-1,2,0], [-1,4,0], [-1,4,-2]], color: '#e2e8f0' },
+          { pts: [[1,0,0], [1,0,2], [1,2,2], [1,2,0]], color: '#fefcbf' },
+          { pts: [[1,0,-2], [1,0,0], [1,4,0], [1,4,-2]], color: '#fefcbf' }
+        ],
+        solution: {
+          top: [[[1,1],[3,1]], [[3,1],[3,5]], [[3,5],[1,5]], [[1,5],[1,1]], [[1,3],[3,3]]],
+          front: [[[1,5],[3,5]], [[3,5],[3,1]], [[3,1],[2,1]], [[2,1],[2,3]], [[2,3],[1,3]], [[1,3],[1,5]], [[2,3],[3,3]]],
+          right: [[[1,1],[5,1]], [[5,1],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]], [[1,3],[5,3]]]
+        }
+      },
+      // Block 1: L-Shaped Corner Block
+      {
+        name: "Block 2: L-Corner Block",
+        rawPolygons: [
+          { pts: [[-2,0,-2], [2,0,-2], [2,0,2], [-2,0,2]], color: '#cbd5e0' },
+          { pts: [[-2,0,-2], [2,0,-2], [2,4,-2], [-2,4,-2]], color: '#a0aec0' },
+          { pts: [[-2,0,2], [0,0,2], [0,2,2], [-2,2,2]], color: '#feb2b2' },
+          { pts: [[0,0,0], [2,0,0], [2,4,0], [0,4,0]], color: '#feb2b2' },
+          { pts: [[-2,2,2], [0,2,2], [0,2,0], [-2,2,0]], color: '#bee3f8' },
+          { pts: [[-2,4,0], [2,4,0], [2,4,-2], [-2,4,-2]], color: '#bee3f8' },
+          { pts: [[-2,0,-2], [-2,0,2], [-2,2,2], [-2,2,0], [-2,4,0], [-2,4,-2]], color: '#e2e8f0' },
+          { pts: [[2,0,-2], [2,0,0], [2,4,0], [2,4,-2]], color: '#fefcbf' }
+        ],
+        solution: {
+          top: [[[1,1],[5,1]], [[5,1],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]], [[1,3],[5,3]], [[3,3],[3,5]]],
+          front: [[[1,5],[5,5]], [[5,5],[5,1]], [[5,1],[3,1]], [[3,1],[3,3]], [[3,3],[1,3]], [[1,3],[1,5]]],
+          right: [[[1,1],[5,1]], [[5,1],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]], [[3,1],[3,5]]]
+        }
+      },
+      // Block 2: U-Channel Block
+      {
+        name: "Block 3: U-Channel Block",
+        rawPolygons: [
+          { pts: [[-2,0,-2], [2,0,-2], [2,0,2], [-2,0,2]], color: '#cbd5e0' },
+          { pts: [[-2,0,2], [-1,0,2], [-1,4,2], [-2,4,2]], color: '#feb2b2' },
+          { pts: [[1,0,2], [2,0,2], [2,4,2], [1,4,2]], color: '#feb2b2' },
+          { pts: [[-1,2,-2], [1,2,-2], [1,2,2], [-1,2,2]], color: '#bee3f8' },
+          { pts: [[-2,4,-2], [-1,4,-2], [-1,4,2], [-2,4,2]], color: '#bee3f8' },
+          { pts: [[1,4,-2], [2,4,-2], [2,4,2], [1,4,2]], color: '#bee3f8' },
+          { pts: [[-2,0,-2], [-2,0,2], [-2,4,2], [-2,4,-2]], color: '#e2e8f0' },
+          { pts: [[2,0,-2], [2,0,2], [2,4,2], [2,4,-2]], color: '#fefcbf' }
+        ],
+        solution: {
+          top: [[[1,1],[5,1]], [[5,1],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]], [[2,1],[2,5]], [[4,1],[4,5]]],
+          front: [[[1,1],[2,1]], [[2,1],[2,3]], [[2,3],[4,3]], [[4,3],[4,1]], [[4,1],[5,1]], [[5,1],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]]],
+          right: [[[1,1],[5,1]], [[5,1],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]], [[1,3],[5,3]]]
+        }
+      }
+    ];
+
+    let currentBlockIdx = 0;
+
+    // --- 2. 3D Camera Engine ---
     const isoCanvas = document.getElementById('isoCanvas');
     const isoCtx = isoCanvas.getContext('2d');
 
     const DEFAULT_ROT_X = 0.5;
     const DEFAULT_ROT_Y = -0.6;
-
     let rotX = DEFAULT_ROT_X;
     let rotY = DEFAULT_ROT_Y;
     let isDraggingCam = false;
     let lastMouseX = 0, lastMouseY = 0;
 
-    // Block mesh scaled to exact grid coordinates
-    const rawPolygons = [
-      { pts: [[-1,0,-2], [1,0,-2], [1,0,2], [-1,0,2]], color: '#cbd5e0' }, // Bottom
-      { pts: [[-1,0,-2], [1,0,-2], [1,4,-2], [-1,4,-2]], color: '#a0aec0' }, // Back
-      { pts: [[-1,0,2], [1,0,2], [1,2,2], [-1,2,2]], color: '#feb2b2' }, // Front Lower
-      { pts: [[-1,2,0], [1,2,0], [1,4,0], [-1,4,0]], color: '#feb2b2' }, // Step Riser
-      { pts: [[-1,2,0], [1,2,0], [1,2,2], [-1,2,2]], color: '#bee3f8' }, // Step Tread
-      { pts: [[-1,4,-2], [1,4,-2], [1,4,0], [-1,4,0]], color: '#bee3f8' }, // Top Tread
-      { pts: [[-1,0,-2], [-1,0,2], [-1,2,2], [-1,2,0], [-1,4,0], [-1,4,-2]], color: '#e2e8f0' }, // Left
-      { pts: [[1,0,0], [1,0,2], [1,2,2], [1,2,0]], color: '#fefcbf' }, // Right Lower
-      { pts: [[1,0,-2], [1,0,0], [1,4,0], [1,4,-2]], color: '#fefcbf' }  // Right Upper
-    ];
-
     function rotate3D(x, y, z, rx, ry) {
       let x1 = x * Math.cos(ry) + z * Math.sin(ry);
       let z1 = -x * Math.sin(ry) + z * Math.cos(ry);
       let y1 = y;
-
       let y2 = y1 * Math.cos(rx) - z1 * Math.sin(rx);
       let z2 = y1 * Math.sin(rx) + z1 * Math.cos(rx);
-
       return { x: x1, y: y2, z: z2 };
     }
 
@@ -248,7 +301,6 @@
       isoCtx.strokeStyle = '#cbd5e0';
       isoCtx.lineWidth = 1;
 
-      // Draw grid lines along X & Z on floor (Y = 0)
       for (let x = gridMinX; x <= gridMaxX; x++) {
         let p1 = rotate3D(x, 0, gridMinZ, rotX, rotY);
         let p2 = rotate3D(x, 0, gridMaxZ, rotX, rotY);
@@ -267,7 +319,6 @@
         isoCtx.stroke();
       }
 
-      // Draw grid unit dots on intersection
       for (let x = gridMinX; x <= gridMaxX; x++) {
         for (let z = gridMinZ; z <= gridMaxZ; z++) {
           let p = rotate3D(x, 0, z, rotX, rotY);
@@ -283,29 +334,21 @@
       isoCtx.clearRect(0, 0, isoCanvas.width, isoCanvas.height);
       const cx = isoCanvas.width / 2;
       const cy = isoCanvas.height / 2 + 25;
-      const scale = 28;
+      const scale = 25;
 
-      // Draw Base Coordinate Floor Grid first
       drawFloorGrid(cx, cy, scale);
 
-      // Render 3D solid model over the grid
-      let projectedPolys = rawPolygons.map(poly => {
+      const model = BLOCKS[currentBlockIdx];
+
+      let projectedPolys = model.rawPolygons.map(poly => {
         let transformedPts = poly.pts.map(pt => {
           let r = rotate3D(pt[0], pt[1], pt[2], rotX, rotY);
-          return {
-            x: cx + r.x * scale,
-            y: cy - r.y * scale,
-            z: r.z
-          };
+          return { x: cx + r.x * scale, y: cy - r.y * scale, z: r.z };
         });
 
         let avgZ = transformedPts.reduce((sum, p) => sum + p.z, 0) / transformedPts.length;
 
-        return {
-          pts: transformedPts,
-          color: poly.color,
-          avgZ: avgZ
-        };
+        return { pts: transformedPts, color: poly.color, avgZ: avgZ };
       });
 
       projectedPolys.sort((a, b) => a.avgZ - b.avgZ);
@@ -351,7 +394,7 @@
       });
     }
 
-    // Camera Controls
+    // Camera Handlers
     function startCamDrag(e) {
       isDraggingCam = true;
       let pos = getEventPos(e);
@@ -362,22 +405,15 @@
     function moveCamDrag(e) {
       if (!isDraggingCam) return;
       let pos = getEventPos(e);
-      let dx = pos.x - lastMouseX;
-      let dy = pos.y - lastMouseY;
-
-      rotY += dx * 0.01;
-      rotX += dy * 0.01;
+      rotY += (pos.x - lastMouseX) * 0.01;
+      rotX += (pos.y - lastMouseY) * 0.01;
       rotX = Math.max(-1.2, Math.min(1.2, rotX));
-
       lastMouseX = pos.x;
       lastMouseY = pos.y;
-
       drawIsometricBlock();
     }
 
-    function endCamDrag() {
-      isDraggingCam = false;
-    }
+    function endCamDrag() { isDraggingCam = false; }
 
     function getEventPos(e) {
       let rect = isoCanvas.getBoundingClientRect();
@@ -397,25 +433,19 @@
     window.addEventListener('touchmove', moveCamDrag, { passive: false });
     window.addEventListener('touchend', endCamDrag, { passive: false });
 
-    document.getElementById('resetCamBtn').addEventListener('click', () => {
-      rotX = DEFAULT_ROT_X;
-      rotY = DEFAULT_ROT_Y;
-      drawIsometricBlock();
-    });
-
-    drawIsometricBlock();
-
-    // --- 2. Interactive Grid Drawing Engine ---
+    // --- 3. Drawing Grid with Solution Overlay ---
     const GRID_SPACING = 20;
     const GRID_ROWS = 7;
     const GRID_COLS = 7;
     const OFFSET = 20;
 
     class DrawingGrid {
-      constructor(canvasId) {
+      constructor(canvasId, viewType) {
         this.canvas = document.getElementById(canvasId);
         this.ctx = this.canvas.getContext('2d');
+        this.viewType = viewType;
         this.lines = [];
+        this.showSolutionOverlay = false;
         this.isDrawing = false;
         this.startPoint = null;
         this.currentPoint = null;
@@ -434,7 +464,6 @@
       getPos(e) {
         const rect = this.canvas.getBoundingClientRect();
         let clientX = e.clientX, clientY = e.clientY;
-
         if (e.touches && e.touches.length > 0) {
           clientX = e.touches[0].clientX;
           clientY = e.touches[0].clientY;
@@ -477,6 +506,7 @@
 
       clear() {
         this.lines = [];
+        this.showSolutionOverlay = false;
         this.render();
       }
 
@@ -493,7 +523,30 @@
           }
         }
 
-        // Drawn Lines
+        // Optional Solution Overlay in Green
+        if (this.showSolutionOverlay) {
+          const solutionLines = BLOCKS[currentBlockIdx].solution[this.viewType];
+          this.ctx.strokeStyle = '#38a169'; // Green line
+          this.ctx.lineWidth = 5;
+          this.ctx.lineCap = 'round';
+          this.ctx.globalAlpha = 0.5; // Semitransparent so student drawing stays visible
+
+          solutionLines.forEach(seg => {
+            let x1 = OFFSET + seg[0][0] * GRID_SPACING;
+            let y1 = OFFSET + seg[0][1] * GRID_SPACING;
+            let x2 = OFFSET + seg[1][0] * GRID_SPACING;
+            let y2 = OFFSET + seg[1][1] * GRID_SPACING;
+
+            this.ctx.beginPath();
+            this.ctx.moveTo(x1, y1);
+            this.ctx.lineTo(x2, y2);
+            this.ctx.stroke();
+          });
+
+          this.ctx.globalAlpha = 1.0;
+        }
+
+        // Student Drawn Lines in Black
         this.ctx.strokeStyle = '#000';
         this.ctx.lineWidth = 3;
         this.ctx.lineCap = 'round';
@@ -504,7 +557,7 @@
           this.ctx.stroke();
         });
 
-        // Rubberband line
+        // Rubberband preview
         if (this.isDrawing) {
           this.ctx.strokeStyle = '#0066cc';
           this.ctx.beginPath();
@@ -515,27 +568,11 @@
       }
     }
 
-    const topGrid = new DrawingGrid('topCanvas');
-    const frontGrid = new DrawingGrid('frontCanvas');
-    const rightGrid = new DrawingGrid('rightCanvas');
+    const topGrid = new DrawingGrid('topCanvas', 'top');
+    const frontGrid = new DrawingGrid('frontCanvas', 'front');
+    const rightGrid = new DrawingGrid('rightCanvas', 'right');
 
-    // --- 3. Verification Engine ---
-    const TARGET_SOLUTIONS = {
-      top: [
-        [[1,1],[3,1]], [[3,1],[3,5]], [[3,5],[1,5]], [[1,5],[1,1]],
-        [[1,3],[3,3]]
-      ],
-      front: [
-        [[1,5],[3,5]], [[3,5],[3,1]], [[3,1],[2,1]],
-        [[2,1],[2,3]], [[2,3],[1,3]], [[1,3],[1,5]],
-        [[2,3],[3,3]]
-      ],
-      right: [
-        [[1,1],[5,1]], [[5,1],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]],
-        [[1,3],[5,3]]
-      ]
-    };
-
+    // --- 4. Verification & Navigation Engine ---
     function normalizeSegment(p1, p2) {
       if (p1.col < p2.col || (p1.col === p2.col && p1.row < p2.row)) {
         return `${p1.col},${p1.row}-${p2.col},${p2.row}`;
@@ -544,6 +581,17 @@
     }
 
     function checkAnswer() {
+      // Enable solution overlay in green across all view canvases
+      topGrid.showSolutionOverlay = true;
+      frontGrid.showSolutionOverlay = true;
+      rightGrid.showSolutionOverlay = true;
+
+      topGrid.render();
+      frontGrid.render();
+      rightGrid.render();
+
+      const targetSol = BLOCKS[currentBlockIdx].solution;
+
       const checkView = (userLines, targetLines) => {
         const userSet = new Set(userLines.map(l => normalizeSegment(l.p1, l.p2)));
         const targetSet = new Set(targetLines.map(l => normalizeSegment({col: l[0][0], row: l[0][1]}, {col: l[1][0], row: l[1][1]})));
@@ -555,32 +603,63 @@
         return true;
       };
 
-      const topOk = checkView(topGrid.lines, TARGET_SOLUTIONS.top);
-      const frontOk = checkView(frontGrid.lines, TARGET_SOLUTIONS.front);
-      const rightOk = checkView(rightGrid.lines, TARGET_SOLUTIONS.right);
+      const topOk = checkView(topGrid.lines, targetSol.top);
+      const frontOk = checkView(frontGrid.lines, targetSol.front);
+      const rightOk = checkView(rightGrid.lines, targetSol.right);
 
       const feedback = document.getElementById('feedback');
 
       if (topOk && frontOk && rightOk) {
         feedback.style.color = '#2f855a';
-        feedback.innerText = '🎉 Correct! All views drawn to scale.';
+        feedback.innerText = '🎉 Correct! All views matched green guidelines.';
       } else {
         feedback.style.color = '#c53030';
         let errors = [];
         if (!topOk) errors.push('Top');
         if (!frontOk) errors.push('Front');
         if (!rightOk) errors.push('Right');
-        feedback.innerText = '❌ Incorrect view(s): ' + errors.join(', ');
+        feedback.innerText = '❌ Review green guide line(s) for: ' + errors.join(', ');
       }
     }
 
+    function loadBlock(idx) {
+      currentBlockIdx = idx;
+      document.getElementById('blockTitle').innerText = BLOCKS[currentBlockIdx].name;
+      
+      rotX = DEFAULT_ROT_X;
+      rotY = DEFAULT_ROT_Y;
+      
+      topGrid.clear();
+      frontGrid.clear();
+      rightGrid.clear();
+      
+      document.getElementById('feedback').innerText = '';
+      drawIsometricBlock();
+    }
+
+    // Button Listeners
     document.getElementById('checkBtn').addEventListener('click', checkAnswer);
+    
+    document.getElementById('nextBtn').addEventListener('click', () => {
+      let nextIdx = (currentBlockIdx + 1) % BLOCKS.length;
+      loadBlock(nextIdx);
+    });
+
     document.getElementById('clearAllBtn').addEventListener('click', () => {
       topGrid.clear();
       frontGrid.clear();
       rightGrid.clear();
       document.getElementById('feedback').innerText = '';
     });
+
+    document.getElementById('resetCamBtn').addEventListener('click', () => {
+      rotX = DEFAULT_ROT_X;
+      rotY = DEFAULT_ROT_Y;
+      drawIsometricBlock();
+    });
+
+    // Initialize App with Block 1
+    loadBlock(0);
   </script>
 </body>
 </html>
