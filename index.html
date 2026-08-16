@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Isometric Reference to Orthographic Drawing Practice</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: #f4f6f8;
+      color: #333;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 1.5rem;
+    }
+    .app-container {
+      display: flex;
+      gap: 20px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    .panel {
+      background: #ffffff;
+      border: 2px solid #333;
+      border-radius: 8px;
+      padding: 15px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .left-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .right-panel {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: 15px;
+    }
+    canvas {
+      background-color: #fafafa;
+      border: 1px dashed #ccc;
+      border-radius: 4px;
+      cursor: crosshair;
+    }
+    .grid-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .grid-title {
+      font-weight: bold;
+      margin-bottom: 5px;
+      text-transform: uppercase;
+      font-size: 0.9rem;
+      letter-spacing: 0.5px;
+    }
+    .controls {
+      margin-top: 15px;
+      display: flex;
+      gap: 10px;
+    }
+    button {
+      padding: 8px 16px;
+      background-color: #0066cc;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:hover {
+      background-color: #004999;
+    }
+    button.clear-btn {
+      background-color: #e53e3e;
+    }
+    button.clear-btn:hover {
+      background-color: #c53030;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Orthographic Drawing Practice Tool</h1>
+
+  <div class="app-container">
+    <!-- Left Panel: Isometric Solid Reference -->
+    <div class="panel left-panel">
+      <div class="grid-title">Solid Block Reference</div>
+      <canvas id="isoCanvas" width="380" height="380"></canvas>
+      <div class="controls">
+        <button id="clearAllBtn" class="clear-btn">Reset Drawing</button>
+      </div>
+    </div>
+
+    <!-- Right Panel: Orthographic Grid Drawing Area -->
+    <div class="panel right-panel">
+      <!-- Top View -->
+      <div class="grid-box">
+        <div class="grid-title">Top View</div>
+        <canvas id="topCanvas" width="200" height="200"></canvas>
+      </div>
+      <!-- Empty space or legend -->
+      <div class="grid-box" style="justify-content: center; text-align: center; color: #888; font-size: 0.85rem;">
+        <p>Snap to dot grid enabled.</p>
+        <p>Click & drag to draw line segments.</p>
+      </div>
+      <!-- Front View -->
+      <div class="grid-box">
+        <div class="grid-title">Front View</div>
+        <canvas id="frontCanvas" width="200" height="200"></canvas>
+      </div>
+      <!-- Right View -->
+      <div class="grid-box">
+        <div class="grid-title">Right View</div>
+        <canvas id="rightCanvas" width="200" height="200"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- 1. Draw 3D Isometric Reference Block ---
+    const isoCanvas = document.getElementById('isoCanvas');
+    const isoCtx = isoCanvas.getContext('2d');
+
+    function drawIsometricBlock() {
+      isoCtx.clearRect(0, 0, isoCanvas.width, isoCanvas.height);
+
+      // Center offset
+      const cx = 190;
+      const cy = 260;
+      const scale = 30;
+
+      // Isometric projection helper
+      function project(x, y, z) {
+        const isoX = cx + (x - y) * Math.cos(Math.PI / 6) * scale;
+        const isoY = cy - z * scale + (x + y) * Math.sin(Math.PI / 6) * scale;
+        return { x: isoX, y: isoY };
+      }
+
+      // Vertices for a stair/step block (2 units wide, 4 units deep, 4 units high)
+      const polygons = [
+        // Bottom-front step (Face 1)
+        { pts: [[0,0,0], [2,0,0], [2,2,0], [0,2,0]], color: '#e0e0e0' },
+        // Front face bottom
+        { pts: [[0,0,0], [2,0,0], [2,0,2], [0,0,2]], color: '#ffffff' },
+        // Step tread
+        { pts: [[0,0,2], [2,0,2], [2,2,2], [0,2,2]], color: '#f0f0f0' },
+        // Step riser
+        { pts: [[0,2,2], [2,2,2], [2,2,4], [0,2,4]], color: '#ffffff' },
+        // Top tread
+        { pts: [[0,2,4], [2,2,4], [2,4,4], [0,4,4]], color: '#f5f5f5' },
+        // Right side lower
+        { pts: [[2,0,0], [2,2,0], [2,2,2], [2,0,2]], color: '#cccccc' },
+        // Right side upper
+        { pts: [[2,2,0], [2,4,0], [2,4,4], [2,2,4]], color: '#cccccc' }
+      ];
+
+      polygons.forEach(poly => {
+        isoCtx.beginPath();
+        poly.pts.forEach((pt, idx) => {
+          const p = project(pt[0], pt[1], pt[2]);
+          if (idx === 0) isoCtx.moveTo(p.x, p.y);
+          else isoCtx.lineTo(p.x, p.y);
+        });
+        isoCtx.closePath();
+        isoCtx.fillStyle = poly.color;
+        isoCtx.fill();
+        isoCtx.strokeStyle = '#222';
+        isoCtx.lineWidth = 2;
+        isoCtx.stroke();
+      });
+    }
+
+    drawIsometricBlock();
+
+    // --- 2. Interactive Dot-Grid Canvas Manager ---
+    const GRID_SPACING = 25;
+    const GRID_ROWS = 7;
+    const GRID_COLS = 7;
+    const OFFSET = 25;
+
+    class DrawingGrid {
+      constructor(canvasId) {
+        this.canvas = document.getElementById(canvasId);
+        this.ctx = this.canvas.getContext('2d');
+        this.lines = [];
+        this.isDrawing = false;
+        this.startPoint = null;
+        this.currentPoint = null;
+
+        this.canvas.addEventListener('mousedown', this.onMouseDown.bind(this));
+        this.canvas.addEventListener('mousemove', this.onMouseMove.bind(this));
+        this.canvas.addEventListener('mouseup', this.onMouseUp.bind(this));
+        
+        this.render();
+      }
+
+      getGridSnap(x, y) {
+        const col = Math.round((x - OFFSET) / GRID_SPACING);
+        const row = Math.round((y - OFFSET) / GRID_SPACING);
+        
+        const clampedCol = Math.max(0, Math.min(GRID_COLS - 1, col));
+        const clampedRow = Math.max(0, Math.min(GRID_ROWS - 1, row));
+
+        return {
+          x: OFFSET + clampedCol * GRID_SPACING,
+          y: OFFSET + clampedRow * GRID_SPACING
+        };
+      }
+
+      getMousePos(e) {
+        const rect = this.canvas.getBoundingClientRect();
+        return {
+          x: e.clientX - rect.left,
+          y: e.clientY - rect.top
+        };
+      }
+
+      onMouseDown(e) {
+        const pos = this.getMousePos(e);
+        this.startPoint = this.getGridSnap(pos.x, pos.y);
+        this.currentPoint = this.startPoint;
+        this.isDrawing = true;
+      }
+
+      onMouseMove(e) {
+        if (!this.isDrawing) return;
+        const pos = this.getMousePos(e);
+        this.currentPoint = this.getGridSnap(pos.x, pos.y);
+        this.render();
+      }
+
+      onMouseUp() {
+        if (this.isDrawing) {
+          if (this.startPoint.x !== this.currentPoint.x || this.startPoint.y !== this.currentPoint.y) {
+            this.lines.push({ p1: this.startPoint, p2: this.currentPoint });
+          }
+          this.isDrawing = false;
+          this.render();
+        }
+      }
+
+      clear() {
+        this.lines = [];
+        this.render();
+      }
+
+      render() {
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+        // Draw dot grid
+        for (let r = 0; r < GRID_ROWS; r++) {
+          for (let c = 0; c < GRID_COLS; c++) {
+            const x = OFFSET + c * GRID_SPACING;
+            const y = OFFSET + r * GRID_SPACING;
+            this.ctx.beginPath();
+            this.ctx.arc(x, y, 2.5, 0, Math.PI * 2);
+            this.ctx.fillStyle = '#777';
+            this.ctx.fill();
+          }
+        }
+
+        // Draw saved lines
+        this.ctx.strokeStyle = '#000';
+        this.ctx.lineWidth = 3;
+        this.ctx.lineCap = 'round';
+
+        this.lines.forEach(line => {
+          this.ctx.beginPath();
+          this.ctx.moveTo(line.p1.x, line.p1.y);
+          this.ctx.lineTo(line.p2.x, line.p2.y);
+          this.ctx.stroke();
+        });
+
+        // Draw active rubber-band line
+        if (this.isDrawing) {
+          this.ctx.strokeStyle = '#0066cc';
+          this.ctx.beginPath();
+          this.ctx.moveTo(this.startPoint.x, this.startPoint.y);
+          this.ctx.lineTo(this.currentPoint.x, this.currentPoint.y);
+          this.ctx.stroke();
+        }
+      }
+    }
+
+    // Initialize all 3 orthographic drawing grids
+    const topGrid = new DrawingGrid('topCanvas');
+    const frontGrid = new DrawingGrid('frontCanvas');
+    const rightGrid = new DrawingGrid('rightCanvas');
+
+    // Handle Reset Button
+    document.getElementById('clearAllBtn').addEventListener('click', () => {
+      topGrid.clear();
+      frontGrid.clear();
+      rightGrid.clear();
+    });
+  </script>
+</body>
+</html>
