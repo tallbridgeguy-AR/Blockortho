@@ -152,7 +152,7 @@
   <h1>Orthographic Drawing Practice Tool</h1>
 
   <div class="app-container">
-    <!-- Left Panel: Rotatable 3D Solid Reference -->
+    <!-- Left Panel: 3D Reference View -->
     <div class="panel left-panel">
       <div class="grid-title" id="blockTitle" style="margin-bottom: 5px;">Block 1: Step Block</div>
       <canvas id="isoCanvas" width="320" height="280"></canvas>
@@ -171,7 +171,7 @@
       </div>
     </div>
 
-    <!-- Right Panel: Orthographic Grids -->
+    <!-- Right Panel: Canvas Grids -->
     <div class="panel right-panel">
       <!-- Top View -->
       <div class="grid-box">
@@ -210,7 +210,7 @@
   </div>
 
   <script>
-    // --- 1. Block Models Database ---
+    // --- 1. Expanded Block Models Database (14 Unique Blocks) ---
     const BLOCKS = [
       {
         name: "Block 1: Step Block",
@@ -286,12 +286,197 @@
           front: [[[1,1],[3,1]], [[3,1],[3,3]], [[3,3],[5,3]], [[5,3],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]]],
           right: [[[1,1],[5,1]], [[5,1],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]], [[1,3],[5,3]]]
         }
+      },
+      {
+        name: "Block 5: Double Staircase",
+        rawPolygons: [
+          { pts: [[0,0,0], [4,0,0], [4,0,4], [0,0,4]], color: '#cbd5e0' },
+          { pts: [[0,0,0], [0,4,0], [4,4,0], [4,0,0]], color: '#a0aec0' },
+          { pts: [[0,0,4], [4,0,4], [4,1,4], [0,1,4]], color: '#feb2b2' },
+          { pts: [[0,1,3], [4,1,3], [4,2,3], [0,2,3]], color: '#feb2b2' },
+          { pts: [[0,2,2], [4,2,2], [4,3,2], [0,3,2]], color: '#feb2b2' },
+          { pts: [[0,3,1], [4,3,1], [4,4,1], [0,4,1]], color: '#feb2b2' },
+          { pts: [[0,1,3], [0,1,4], [4,1,4], [4,1,3]], color: '#bee3f8' },
+          { pts: [[0,2,2], [0,2,3], [4,2,3], [4,2,2]], color: '#bee3f8' },
+          { pts: [[0,3,1], [0,3,2], [4,3,2], [4,3,1]], color: '#bee3f8' },
+          { pts: [[0,4,0], [0,4,1], [4,4,1], [4,4,0]], color: '#bee3f8' },
+          { pts: [[0,0,0], [0,0,4], [0,1,4], [0,1,3], [0,2,3], [0,2,2], [0,3,2], [0,3,1], [0,4,1], [0,4,0]], color: '#e2e8f0' },
+          { pts: [[4,0,0], [4,0,4], [4,1,4], [4,1,3], [4,2,3], [4,2,2], [4,3,2], [4,3,1], [4,4,1], [4,4,0]], color: '#e2e8f0' }
+        ],
+        solution: {
+          top: [[[1,1],[5,1]], [[5,1],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]], [[1,2],[5,2]], [[1,3],[5,3]], [[1,4],[5,4]]],
+          front: [[[1,1],[5,1]], [[5,1],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]], [[1,2],[5,2]], [[1,3],[5,3]], [[1,4],[5,4]]],
+          right: [[[1,5],[5,5]], [[5,5],[5,4]], [[5,4],[4,4]], [[4,4],[4,3]], [[4,3],[3,3]], [[3,3],[3,2]], [[3,2],[2,2]], [[2,2],[2,1]], [[2,1],[1,1]], [[1,1],[1,5]]]
+        }
+      },
+      {
+        name: "Block 6: T-Block",
+        rawPolygons: [
+          { pts: [[0,0,0], [4,0,0], [4,0,4], [0,0,4]], color: '#cbd5e0' },
+          { pts: [[0,0,0], [0,4,0], [4,4,0], [4,0,0]], color: '#a0aec0' },
+          { pts: [[0,0,4], [4,0,4], [4,2,4], [0,2,4]], color: '#feb2b2' },
+          { pts: [[1,2,2], [3,2,2], [3,4,2], [1,4,2]], color: '#feb2b2' },
+          { pts: [[0,2,2], [0,2,4], [1,2,4], [1,2,2]], color: '#bee3f8' },
+          { pts: [[3,2,2], [3,2,4], [4,2,4], [4,2,2]], color: '#bee3f8' },
+          { pts: [[1,4,0], [1,4,2], [3,4,2], [3,4,0]], color: '#bee3f8' },
+          { pts: [[1,2,0], [1,2,2], [1,4,2], [1,4,0]], color: '#fefcbf' },
+          { pts: [[3,2,0], [3,2,2], [3,4,2], [3,4,0]], color: '#fefcbf' },
+          { pts: [[0,0,0], [0,0,4], [0,2,4], [0,2,0]], color: '#e2e8f0' },
+          { pts: [[4,0,0], [4,0,4], [4,2,4], [4,2,0]], color: '#e2e8f0' }
+        ],
+        solution: {
+          top: [[[1,1],[5,1]], [[5,1],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]], [[1,3],[5,3]], [[2,3],[2,5]], [[4,3],[4,5]]],
+          front: [[[1,1],[5,1]], [[5,1],[5,3]], [[5,3],[4,3]], [[4,3],[4,5]], [[4,5],[2,5]], [[2,5],[2,3]], [[2,3],[1,3]], [[1,3],[1,1]]],
+          right: [[[1,5],[5,5]], [[5,5],[5,1]], [[5,1],[3,1]], [[3,1],[3,3]], [[3,3],[1,3]], [[1,3],[1,5]]]
+        }
+      },
+      {
+        name: "Block 7: Slotted Ridge Block",
+        rawPolygons: [
+          { pts: [[0,0,0], [4,0,0], [4,0,4], [0,0,4]], color: '#cbd5e0' },
+          { pts: [[0,0,0], [0,4,0], [4,4,0], [4,0,0]], color: '#a0aec0' },
+          { pts: [[0,0,4], [1,0,4], [1,4,4], [0,4,4]], color: '#feb2b2' },
+          { pts: [[3,0,4], [4,0,4], [4,4,4], [3,4,4]], color: '#feb2b2' },
+          { pts: [[1,0,2], [3,0,2], [3,4,2], [1,4,2]], color: '#feb2b2' },
+          { pts: [[1,0,2], [1,0,4], [1,4,4], [1,4,2]], color: '#fefcbf' },
+          { pts: [[3,0,2], [3,0,4], [3,4,4], [3,4,2]], color: '#fefcbf' },
+          { pts: [[0,0,0], [0,0,4], [0,4,4], [0,4,0]], color: '#e2e8f0' },
+          { pts: [[4,0,0], [4,0,4], [4,4,4], [4,4,0]], color: '#e2e8f0' }
+        ],
+        solution: {
+          top: [[[1,1],[5,1]], [[5,1],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]], [[2,1],[2,5]], [[4,1],[4,5]]],
+          front: [[[1,1],[5,1]], [[5,1],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]], [[2,3],[4,3]], [[2,3],[2,5]], [[4,3],[4,5]]],
+          right: [[[1,1],[5,1]], [[5,1],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]], [[1,3],[5,3]]]
+        }
+      },
+      {
+        name: "Block 8: Corner Cutout Block",
+        rawPolygons: [
+          { pts: [[0,0,0], [4,0,0], [4,0,4], [0,0,4]], color: '#cbd5e0' },
+          { pts: [[0,0,0], [0,4,0], [4,4,0], [4,0,0]], color: '#a0aec0' },
+          { pts: [[0,0,4], [2,0,4], [2,2,4], [0,2,4]], color: '#feb2b2' },
+          { pts: [[2,0,2], [4,0,2], [4,4,2], [0,4,2]], color: '#feb2b2' },
+          { pts: [[2,2,2], [2,2,4], [0,2,4], [0,2,2]], color: '#bee3f8' },
+          { pts: [[2,0,2], [2,2,2], [2,2,4], [2,0,4]], color: '#fefcbf' },
+          { pts: [[0,0,0], [0,0,4], [0,4,2], [0,4,0]], color: '#e2e8f0' },
+          { pts: [[4,0,0], [4,0,2], [4,4,2], [4,4,0]], color: '#e2e8f0' }
+        ],
+        solution: {
+          top: [[[1,1],[5,1]], [[5,1],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]], [[1,3],[3,3]], [[3,1],[3,3]]],
+          front: [[[1,1],[5,1]], [[5,1],[5,3]], [[5,3],[1,3]], [[1,3],[1,1]], [[1,3],[3,3]], [[3,3],[3,5]], [[3,5],[1,5]], [[1,5],[1,3]]],
+          right: [[[1,5],[5,5]], [[5,5],[5,1]], [[5,1],[3,1]], [[3,1],[3,3]], [[3,3],[1,3]], [[1,3],[1,5]]]
+        }
+      },
+      {
+        name: "Block 9: Central Tower Block",
+        rawPolygons: [
+          { pts: [[0,0,0], [4,0,0], [4,0,4], [0,0,4]], color: '#cbd5e0' },
+          { pts: [[0,0,0], [0,4,0], [4,4,0], [4,0,0]], color: '#a0aec0' },
+          { pts: [[0,0,2], [4,0,2], [4,4,2], [0,4,2]], color: '#feb2b2' },
+          { pts: [[1,1,4], [3,1,4], [3,3,4], [1,3,4]], color: '#feb2b2' },
+          { pts: [[1,1,2], [3,1,2], [3,1,4], [1,1,4]], color: '#bee3f8' },
+          { pts: [[1,3,2], [3,3,2], [3,3,4], [1,3,4]], color: '#bee3f8' },
+          { pts: [[1,1,2], [1,3,2], [1,3,4], [1,1,4]], color: '#fefcbf' },
+          { pts: [[3,1,2], [3,3,2], [3,3,4], [3,1,4]], color: '#fefcbf' }
+        ],
+        solution: {
+          top: [[[1,1],[5,1]], [[5,1],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]], [[2,2],[4,2]], [[4,2],[4,4]], [[4,4],[2,4]], [[2,4],[2,2]]],
+          front: [[[1,1],[5,1]], [[5,1],[5,3]], [[5,3],[1,3]], [[1,3],[1,1]], [[2,3],[2,5]], [[2,5],[4,5]], [[4,5],[4,3]]],
+          right: [[[1,1],[5,1]], [[5,1],[5,3]], [[5,3],[1,3]], [[1,3],[1,1]], [[2,3],[2,5]], [[2,5],[4,5]], [[4,5],[4,3]]]
+        }
+      },
+      {
+        name: "Block 10: Slanted Face Pyramid Block",
+        rawPolygons: [
+          { pts: [[0,0,0], [4,0,0], [4,0,4], [0,0,4]], color: '#cbd5e0' },
+          { pts: [[0,0,0], [0,4,0], [4,4,0], [4,0,0]], color: '#a0aec0' },
+          { pts: [[0,0,2], [4,0,2], [4,4,2], [0,4,2]], color: '#feb2b2' },
+          { pts: [[0,0,2], [4,0,2], [2,2,4]], color: '#bee3f8' },
+          { pts: [[4,0,2], [4,4,2], [2,2,4]], color: '#fefcbf' },
+          { pts: [[4,4,2], [0,4,2], [2,2,4]], color: '#bee3f8' },
+          { pts: [[0,4,2], [0,0,2], [2,2,4]], color: '#fefcbf' }
+        ],
+        solution: {
+          top: [[[1,1],[5,1]], [[5,1],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]], [[1,1],[3,3]], [[5,1],[3,3]], [[5,5],[3,3]], [[1,5],[3,3]]],
+          front: [[[1,1],[5,1]], [[5,1],[5,3]], [[5,3],[1,3]], [[1,3],[1,1]], [[1,3],[3,5]], [[5,3],[3,5]]],
+          right: [[[1,1],[5,1]], [[5,1],[5,3]], [[5,3],[1,3]], [[1,3],[1,1]], [[1,3],[3,5]], [[5,3],[3,5]]]
+        }
+      },
+      {
+        name: "Block 11: Cross Block",
+        rawPolygons: [
+          { pts: [[0,0,0], [4,0,0], [4,0,4], [0,0,4]], color: '#cbd5e0' },
+          { pts: [[0,0,0], [0,4,0], [4,4,0], [4,0,0]], color: '#a0aec0' },
+          { pts: [[0,1,2], [4,1,2], [4,3,2], [0,3,2]], color: '#feb2b2' },
+          { pts: [[1,0,2], [3,0,2], [3,4,2], [1,4,2]], color: '#feb2b2' },
+          { pts: [[1,1,4], [3,1,4], [3,3,4], [1,3,4]], color: '#feb2b2' },
+          { pts: [[1,1,2], [3,1,2], [3,1,4], [1,1,4]], color: '#bee3f8' },
+          { pts: [[1,3,2], [3,3,2], [3,3,4], [1,3,4]], color: '#bee3f8' },
+          { pts: [[1,1,2], [1,3,2], [1,3,4], [1,1,4]], color: '#fefcbf' },
+          { pts: [[3,1,2], [3,3,2], [3,3,4], [3,1,4]], color: '#fefcbf' }
+        ],
+        solution: {
+          top: [[[2,1],[4,1]], [[4,1],[4,2]], [[4,2],[5,2]], [[5,2],[5,4]], [[5,4],[4,4]], [[4,4],[4,5]], [[4,5],[2,5]], [[2,5],[2,4]], [[2,4],[1,4]], [[1,4],[1,2]], [[1,2],[2,2]], [[2,2],[2,1]], [[2,2],[4,2]], [[4,2],[4,4]], [[4,4],[2,4]], [[2,4],[2,2]]],
+          front: [[[1,1],[5,1]], [[5,1],[5,3]], [[5,3],[1,3]], [[1,3],[1,1]], [[2,3],[2,5]], [[2,5],[4,5]], [[4,5],[4,3]]],
+          right: [[[1,1],[5,1]], [[5,1],[5,3]], [[5,3],[1,3]], [[1,3],[1,1]], [[2,3],[2,5]], [[2,5],[4,5]], [[4,5],[4,3]]]
+        }
+      },
+      {
+        name: "Block 12: Diagonal Wedge Step",
+        rawPolygons: [
+          { pts: [[0,0,0], [4,0,0], [4,0,4], [0,0,4]], color: '#cbd5e0' },
+          { pts: [[0,0,0], [0,4,0], [4,4,0], [4,0,0]], color: '#a0aec0' },
+          { pts: [[0,0,2], [4,0,2], [4,2,2], [0,2,2]], color: '#feb2b2' },
+          { pts: [[0,2,4], [4,2,4], [4,4,4], [0,4,4]], color: '#feb2b2' },
+          { pts: [[0,2,2], [4,2,2], [4,2,4], [0,2,4]], color: '#bee3f8' },
+          { pts: [[0,0,0], [0,0,2], [0,2,2], [0,2,4], [0,4,4], [0,4,0]], color: '#e2e8f0' },
+          { pts: [[4,0,0], [4,0,2], [4,2,2], [4,2,4], [4,4,4], [4,4,0]], color: '#e2e8f0' }
+        ],
+        solution: {
+          top: [[[1,1],[5,1]], [[5,1],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]], [[1,3],[5,3]]],
+          front: [[[1,1],[5,1]], [[5,1],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]], [[1,3],[5,3]]],
+          right: [[[1,5],[5,5]], [[5,5],[5,3]], [[5,3],[3,3]], [[3,3],[3,1]], [[3,1],[1,1]], [[1,1],[1,5]]]
+        }
+      },
+      {
+        name: "Block 13: Side Notch Block",
+        rawPolygons: [
+          { pts: [[0,0,0], [4,0,0], [4,0,4], [0,0,4]], color: '#cbd5e0' },
+          { pts: [[0,0,0], [0,4,0], [4,4,0], [4,0,0]], color: '#a0aec0' },
+          { pts: [[0,0,4], [4,0,4], [4,4,4], [0,4,4]], color: '#feb2b2' },
+          { pts: [[4,1,2], [4,3,2], [4,3,4], [4,1,4]], color: '#e2e8f0' },
+          { pts: [[3,1,2], [4,1,2], [4,1,4], [3,1,4]], color: '#bee3f8' },
+          { pts: [[3,3,2], [4,3,2], [4,3,4], [3,3,4]], color: '#bee3f8' },
+          { pts: [[3,1,2], [3,3,2], [3,3,4], [3,1,4]], color: '#fefcbf' }
+        ],
+        solution: {
+          top: [[[1,1],[5,1]], [[5,1],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]], [[4,2],[5,2]], [[4,4],[5,4]], [[4,2],[4,4]]],
+          front: [[[1,1],[5,1]], [[5,1],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]], [[2,1],[2,5]], [[4,1],[4,5]]],
+          right: [[[1,1],[5,1]], [[5,1],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]], [[2,1],[2,3]], [[2,3],[4,3]], [[4,3],[4,1]]]
+        }
+      },
+      {
+        name: "Block 14: Double Notch Bridge",
+        rawPolygons: [
+          { pts: [[0,0,0], [4,0,0], [4,0,4], [0,0,4]], color: '#cbd5e0' },
+          { pts: [[0,0,0], [0,4,0], [4,4,0], [4,0,0]], color: '#a0aec0' },
+          { pts: [[0,0,4], [1,0,4], [1,4,4], [0,4,4]], color: '#feb2b2' },
+          { pts: [[3,0,4], [4,0,4], [4,4,4], [3,4,4]], color: '#feb2b2' },
+          { pts: [[1,0,3], [3,0,3], [3,4,3], [1,4,3]], color: '#feb2b2' },
+          { pts: [[1,0,3], [1,0,4], [1,4,4], [1,4,3]], color: '#fefcbf' },
+          { pts: [[3,0,3], [3,0,4], [3,4,4], [3,4,3]], color: '#fefcbf' }
+        ],
+        solution: {
+          top: [[[1,1],[5,1]], [[5,1],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]], [[2,1],[2,5]], [[4,1],[4,5]]],
+          front: [[[1,1],[5,1]], [[5,1],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]], [[2,2],[4,2]], [[2,2],[2,5]], [[4,2],[4,5]]],
+          right: [[[1,1],[5,1]], [[5,1],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]], [[1,4],[5,4]]]
+        }
       }
     ];
 
     let currentBlockIdx = 0;
 
-    // --- 2. 3D Camera & Rendering Engine ---
+    // --- 2. 3D Camera & Fixed Surface Distortion Renderer ---
     const isoCanvas = document.getElementById('isoCanvas');
     const isoCtx = isoCanvas.getContext('2d');
 
@@ -380,11 +565,12 @@
 
       model.rawPolygons.forEach(poly => {
         let norm = computeNormal(poly.pts);
+        // Corrected normal rotation and back-face sorting vector calculation
         let rotNorm = rotate3D(norm.x + 2, norm.y + 2, norm.z + 2, rotX, rotY);
         let originRot = rotate3D(2, 2, 2, rotX, rotY);
         let viewNormZ = rotNorm.z - originRot.z;
 
-        if (viewNormZ > -0.01) {
+        if (viewNormZ > -0.0001) {
           let transformedPts = poly.pts.map(pt => {
             let r = rotate3D(pt[0], pt[1], pt[2], rotX, rotY);
             return { x: cx + r.x * scale, y: cy - r.y * scale, z: r.z };
@@ -395,7 +581,7 @@
         }
       });
 
-      // Painter's algorithm sort for full opacity solids
+      // Painter's algorithm sort for completely solid faces
       visiblePolys.sort((a, b) => a.avgZ - b.avgZ);
 
       visiblePolys.forEach(poly => {
@@ -406,7 +592,6 @@
         });
         isoCtx.closePath();
         
-        // Solid surface rendering
         isoCtx.fillStyle = poly.color;
         isoCtx.fill();
         isoCtx.strokeStyle = '#1a202c';
@@ -480,7 +665,7 @@
     window.addEventListener('touchmove', moveCamDrag, { passive: false });
     window.addEventListener('touchend', endCamDrag, { passive: false });
 
-    // --- 3. Drawing Grid Engine with Dimension Indicators ---
+    // --- 3. Drawing Grid Engine ---
     const GRID_SPACING = 22;
     const GRID_ROWS = 7;
     const GRID_COLS = 7;
@@ -560,7 +745,7 @@
       render() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-        // Persistent full measurement grid mesh
+        // Grid Mesh
         for (let r = 0; r < GRID_ROWS; r++) {
           this.ctx.strokeStyle = '#e2e8f0';
           this.ctx.lineWidth = 1;
@@ -578,7 +763,7 @@
           this.ctx.stroke();
         }
 
-        // Grid Intersection Dots
+        // Grid Dots
         for (let r = 0; r < GRID_ROWS; r++) {
           for (let c = 0; c < GRID_COLS; c++) {
             this.ctx.beginPath();
@@ -588,7 +773,7 @@
           }
         }
 
-        // Measurement Grid Labels (X & Y scale coordinates)
+        // Axis Grid Labels
         this.ctx.font = '9px sans-serif';
         this.ctx.fillStyle = '#718096';
         this.ctx.textAlign = 'center';
@@ -614,7 +799,7 @@
         this.ctx.textAlign = 'center';
         this.ctx.fillText("START", anchorX, anchorY + 14);
 
-        // Solution Overlay in Green
+        // Solution Overlay
         if (this.showSolutionOverlay) {
           const solutionLines = BLOCKS[currentBlockIdx].solution[this.viewType];
           this.ctx.strokeStyle = '#38a169';
@@ -648,7 +833,7 @@
           this.ctx.stroke();
         });
 
-        // Dynamic rubberband drawing line
+        // Dynamic rubberband line
         if (this.isDrawing) {
           this.ctx.strokeStyle = '#0066cc';
           this.ctx.beginPath();
@@ -663,7 +848,7 @@
     const frontGrid = new DrawingGrid('frontCanvas', 'front');
     const rightGrid = new DrawingGrid('rightCanvas', 'right');
 
-    // --- 4. Segment Deconstruction & Verification Engine ---
+    // --- 4. Solution Verification Engine ---
     function normalizeSegment(p1, p2) {
       if (p1.col < p2.col || (p1.col === p2.col && p1.row < p2.row)) {
         return `${p1.col},${p1.row}-${p2.col},${p2.row}`;
@@ -671,7 +856,6 @@
       return `${p2.col},${p2.row}-${p1.col},${p1.row}`;
     }
 
-    // Breaks any multi-unit continuous segment into 1-unit atomic segments
     function breakIntoUnitSegments(p1, p2) {
       let units = [];
       let dx = Math.sign(p2.col - p1.col);
@@ -753,7 +937,7 @@
       drawIsometricBlock();
     }
 
-    // Button Event Listeners
+    // Controls Logic
     document.getElementById('checkBtn').addEventListener('click', checkAnswer);
     
     document.getElementById('nextBtn').addEventListener('click', () => {
@@ -774,7 +958,7 @@
       drawIsometricBlock();
     });
 
-    // Initialize App
+    // Initialize Tool
     loadBlock(0);
   </script>
 </body>
