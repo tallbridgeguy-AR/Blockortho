@@ -211,7 +211,7 @@
             background: #f8fafc;
             border: 1px dashed #cbd5e0;
             border-radius: 8px;
-            padding: 8px;
+            padding: 12px;
         }
 
         .view-header {
@@ -219,7 +219,7 @@
             justify-content: space-between;
             align-items: center;
             width: 100%;
-            margin-bottom: 6px;
+            margin-bottom: 8px;
             padding: 0 4px;
         }
 
@@ -247,10 +247,11 @@
 
         .dot-canvas {
             background: white;
-            border: 1px solid #e2e8f0;
-            border-radius: 4px;
+            border: 1px solid #cbd5e0;
+            border-radius: 6px;
             cursor: crosshair;
             touch-action: none;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.02);
         }
 
         .drawing-instructions {
@@ -338,10 +339,9 @@
 
 <script>
     const GRID_SIZE = 3;
-    // 4x4 dots = 3x3 grid spaces
-    const DOT_ROWS = 3; // 0..3 (4 dots vertically)
-    const DOT_COLS = 3; // 0..3 (4 dots horizontally)
-    const START_DOT = { r: 3, c: 0 }; // Bottom-Left dot of 4x4 grid
+    const DOT_ROWS = 3; // 4 dots (indices 0..3)
+    const DOT_COLS = 3; // 4 dots (indices 0..3)
+    const START_DOT = { r: 3, c: 0 }; // Bottom-left red dot
 
     let scene, camera, renderer, modelGroup;
     let activeBlocks = []; 
@@ -577,19 +577,25 @@
         };
 
         activeBlocks.forEach(b => {
-            // TOP VIEW: x -> col (0..2), z -> row (front of model z=2 maps to row 2)
-            const topR = START_DOT.r - 1 - (2 - b.z);
-            const topC = START_DOT.c + b.x;
+            // TOP VIEW: Standard Orthographic
+            // Horizontal axis: x (0 -> col 0, 2 -> col 2)
+            // Vertical axis: z (back z=0 -> top row 0, front z=2 -> bottom row 2)
+            const topR = b.z; 
+            const topC = b.x;
             addSquare('top', topR, topC);
 
-            // FRONT VIEW: x -> col (0..2), y -> height (bottom y=0 maps to row 2)
-            const frontR = START_DOT.r - 1 - b.y;
-            const frontC = START_DOT.c + b.x;
+            // FRONT VIEW:
+            // Horizontal axis: x (0 -> col 0, 2 -> col 2)
+            // Vertical axis: y (top y=2 -> row 0, bottom y=0 -> row 2)
+            const frontR = 2 - b.y;
+            const frontC = b.x;
             addSquare('front', frontR, frontC);
 
-            // RIGHT VIEW: z -> col (front z=2 maps to col 2), y -> height (bottom y=0 maps to row 2)
-            const rightR = START_DOT.r - 1 - b.y;
-            const rightC = START_DOT.c + (2 - b.z);
+            // RIGHT VIEW: Looking from the right side towards the left
+            // Horizontal axis: z (front z=2 -> col 0, back z=0 -> col 2)
+            // Vertical axis: y (top y=2 -> row 0, bottom y=0 -> row 2)
+            const rightR = 2 - b.y;
+            const rightC = 2 - b.z;
             addSquare('right', rightR, rightC);
         });
     }
@@ -666,6 +672,17 @@
         return segments;
     }
 
+    // Dynamic grid centering calculations
+    function getGridDimensions(canvas) {
+        const padding = 35; // Equal margin around dot matrix
+        const availableWidth = canvas.width - (padding * 2);
+        const spacing = availableWidth / DOT_COLS;
+        const offsetX = padding;
+        const offsetY = padding;
+
+        return { spacing, offsetX, offsetY };
+    }
+
     function getCanvasDotCoordinate(canvas, e) {
         const rect = canvas.getBoundingClientRect();
         const clientX = e.touches ? e.touches[0].clientX : e.clientX;
@@ -674,9 +691,7 @@
         const x = clientX - rect.left;
         const y = clientY - rect.top;
 
-        const spacing = canvas.width / (DOT_COLS + 1.5);
-        const offsetX = spacing * 1.25;
-        const offsetY = spacing * 1.25;
+        const { spacing, offsetX, offsetY } = getGridDimensions(canvas);
 
         const col = Math.round((x - offsetX) / spacing);
         const row = Math.round((y - offsetY) / spacing);
@@ -705,9 +720,7 @@
     }
 
     function getDotPixel(canvas, row, col) {
-        const spacing = canvas.width / (DOT_COLS + 1.5);
-        const offsetX = spacing * 1.25;
-        const offsetY = spacing * 1.25;
+        const { spacing, offsetX, offsetY } = getGridDimensions(canvas);
         return {
             x: offsetX + col * spacing,
             y: offsetY + row * spacing
@@ -722,7 +735,7 @@
 
         ctx.clearRect(0, 0, width, height);
 
-        // Render 4x4 dot grid
+        // Perfectly centered 4x4 dot matrix
         for (let r = 0; r <= DOT_ROWS; r++) {
             for (let c = 0; c <= DOT_COLS; c++) {
                 const pt = getDotPixel(canvas, r, c);
@@ -736,7 +749,7 @@
                     ctx.font = 'bold 9px sans-serif';
                     ctx.fillStyle = '#ef4444';
                     ctx.textAlign = 'center';
-                    ctx.fillText("START", pt.x, pt.y + 15);
+                    ctx.fillText("START", pt.x, pt.y + 16);
                 } else {
                     ctx.fillStyle = '#94a3b8';
                     ctx.beginPath();
@@ -759,7 +772,7 @@
             ctx.setLineDash([]);
         }
 
-        // Render drawn lines
+        // Render user-drawn lines
         userLines[view].forEach(line => {
             const p1 = getDotPixel(canvas, line.r1, line.c1);
             const p2 = getDotPixel(canvas, line.r2, line.c2);
