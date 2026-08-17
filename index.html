@@ -339,6 +339,7 @@
 <script>
     const GRID_SIZE = 3;
     const DOT_GRID_COUNT = 6; 
+    // The Red Dot marks bottom-left corner of the model projection space (c=1, r=5)
     const START_DOT = { r: 5, c: 1 }; 
 
     let scene, camera, renderer, modelGroup;
@@ -575,17 +576,17 @@
         };
 
         activeBlocks.forEach(b => {
-            // TOP VIEW: x -> column, z -> row (5-z)
-            const topR = START_DOT.r - 1 - b.z;
+            // TOP VIEW: x -> col, z -> row (front of model z=2 is at row 5)
+            const topR = START_DOT.r - 1 - (2 - b.z);
             const topC = START_DOT.c + b.x;
             addSquare('top', topR, topC);
 
-            // FRONT VIEW: x -> column, y -> height (5-y)
+            // FRONT VIEW: x -> col, y -> row (bottom y=0 is at row 5)
             const frontR = START_DOT.r - 1 - b.y;
             const frontC = START_DOT.c + b.x;
             addSquare('front', frontR, frontC);
 
-            // RIGHT VIEW: z -> column (depth into screen), y -> height (5-y)
+            // RIGHT VIEW: z -> col (front z=2 mapped left-to-right), y -> row
             const rightR = START_DOT.r - 1 - b.y;
             const rightC = START_DOT.c + (2 - b.z);
             addSquare('right', rightR, rightC);
@@ -617,16 +618,14 @@
                 const endDot = getCanvasDotCoordinate(canvas, e);
 
                 if (endDot && (endDot.r !== activeDrawing.startDot.r || endDot.c !== activeDrawing.startDot.c)) {
-                    const line = canonicalLine({
-                        r1: activeDrawing.startDot.r,
-                        c1: activeDrawing.startDot.c,
-                        r2: endDot.r,
-                        c2: endDot.c
+                    // Deconstruct long line segment drags into single grid-unit sub-segments
+                    const segments = normalizeSegments(activeDrawing.startDot, endDot);
+                    segments.forEach(seg => {
+                        const line = canonicalLine(seg);
+                        if (!userLines[view].some(l => sameLine(l, line))) {
+                            userLines[view].push(line);
+                        }
                     });
-
-                    if (!userLines[view].some(l => sameLine(l, line))) {
-                        userLines[view].push(line);
-                    }
                 }
 
                 activeDrawing = null;
@@ -643,6 +642,28 @@
 
             redrawCanvas(view);
         });
+    }
+
+    function normalizeSegments(p1, p2) {
+        const segments = [];
+        const dr = p2.r - p1.r;
+        const dc = p2.c - p1.c;
+        const steps = Math.max(Math.abs(dr), Math.abs(dc));
+
+        if (steps === 0) return segments;
+
+        const stepR = dr / steps;
+        const stepC = dc / steps;
+
+        for (let i = 0; i < steps; i++) {
+            segments.push({
+                r1: Math.round(p1.r + i * stepR),
+                c1: Math.round(p1.c + i * stepC),
+                r2: Math.round(p1.r + (i + 1) * stepR),
+                c2: Math.round(p1.c + (i + 1) * stepC)
+            });
+        }
+        return segments;
     }
 
     function getCanvasDotCoordinate(canvas, e) {
@@ -698,7 +719,7 @@
 
         ctx.clearRect(0, 0, width, height);
 
-        // Grid Dot Pattern & Labels
+        // Render dot grid
         for (let r = 0; r <= DOT_GRID_COUNT; r++) {
             for (let c = 0; c <= DOT_GRID_COUNT; c++) {
                 const x = (c + 1) * spacing;
@@ -723,7 +744,7 @@
             }
         }
 
-        // Active line preview while dragging
+        // Active line rubber-band preview
         if (activeDrawing && activeDrawing.view === view) {
             const startP = getDotPixel(canvas, activeDrawing.startDot.r, activeDrawing.startDot.c);
             ctx.strokeStyle = '#3b82f6';
@@ -736,7 +757,7 @@
             ctx.setLineDash([]);
         }
 
-        // Drawn Lines by user or validated color mode
+        // Render drawn lines
         userLines[view].forEach(line => {
             const p1 = getDotPixel(canvas, line.r1, line.c1);
             const p2 = getDotPixel(canvas, line.r2, line.c2);
@@ -811,7 +832,7 @@
             }
         } else {
             if (!isGameActive) {
-                alert('❌ Not quite right yet!\n\n• Green lines = Correct\n• Red lines = Incorrect or extra lines');
+                alert('❌ Not quite right yet!\n\n• Green lines = Correct\n• Red lines = Extra or incorrect lines');
             }
         }
     }
