@@ -253,16 +253,6 @@
             touch-action: none;
             box-shadow: inset 0 1px 3px rgba(0,0,0,0.02);
         }
-
-        .drawing-instructions {
-            font-size: 0.8rem;
-            color: #4a5568;
-            margin-bottom: 12px;
-            background: #f1f5f9;
-            padding: 8px 12px;
-            border-radius: 6px;
-            line-height: 1.4;
-        }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
@@ -285,7 +275,7 @@
                 <button class="game-btn" id="btn-start-game">Start Game ⏱️</button>
                 <div class="game-stat">
                     <span class="game-stat-label">TIME</span>
-                    <span class="game-stat-value" id="game-timer">1:00</span>
+                    <span class="game-stat-value" id="game-timer">1:30</span>
                 </div>
                 <div class="game-stat">
                     <span class="game-stat-label">SOLVED</span>
@@ -304,9 +294,6 @@
 
         <div class="panel">
             <div class="panel-title">ORTHOGRAPHIC DRAWING WORKSPACE</div>
-            <div class="drawing-instructions">
-                Start drawing from the <strong>RED START DOT</strong> on each grid. Click dots or drag between dots to draw lines.
-            </div>
 
             <div class="grid-views">
                 <div class="view-box" style="grid-column: 1;">
@@ -341,7 +328,6 @@
     const GRID_SIZE = 3;
     const DOT_ROWS = 3; // 4 dots (indices 0..3)
     const DOT_COLS = 3; // 4 dots (indices 0..3)
-    const START_DOT = { r: 3, c: 0 }; // Bottom-left red dot
 
     let scene, camera, renderer, modelGroup;
     let activeBlocks = []; 
@@ -356,7 +342,7 @@
 
     let isGameActive = false;
     let gameScore = 0;
-    let gameTimeRemaining = 60;
+    let gameTimeRemaining = 90;
     let gameTimerInterval = null;
 
     let activeDrawing = null; 
@@ -577,23 +563,17 @@
         };
 
         activeBlocks.forEach(b => {
-            // TOP VIEW: Standard Orthographic Projection
-            // Horizontal axis: x (0 -> col 0, 2 -> col 2)
-            // Vertical axis: z (back z=0 -> top row 0, front z=2 -> bottom row 2)
+            // TOP VIEW
             const topR = b.z; 
             const topC = b.x;
             addSquare('top', topR, topC);
 
-            // FRONT VIEW (Looking at FRONT label face):
-            // Horizontal axis: x (left x=0 -> col 0, right x=2 -> col 2)
-            // Vertical axis: y (top y=2 -> row 0, bottom y=0 -> row 2)
+            // FRONT VIEW
             const frontR = 2 - b.y;
             const frontC = b.x;
             addSquare('front', frontR, frontC);
 
-            // RIGHT VIEW (Looking at RIGHT label face):
-            // Horizontal axis: z (front z=2 -> col 0, back z=0 -> col 2)
-            // Vertical axis: y (top y=2 -> row 0, bottom y=0 -> row 2)
+            // RIGHT VIEW
             const rightR = 2 - b.y;
             const rightC = 2 - b.z;
             addSquare('right', rightR, rightC);
@@ -737,23 +717,10 @@
         for (let r = 0; r <= DOT_ROWS; r++) {
             for (let c = 0; c <= DOT_COLS; c++) {
                 const pt = getDotPixel(canvas, r, c);
-
-                if (r === START_DOT.r && c === START_DOT.c) {
-                    ctx.fillStyle = '#ef4444';
-                    ctx.beginPath();
-                    ctx.arc(pt.x, pt.y, 6.5, 0, Math.PI * 2);
-                    ctx.fill();
-
-                    ctx.font = 'bold 9px sans-serif';
-                    ctx.fillStyle = '#ef4444';
-                    ctx.textAlign = 'center';
-                    ctx.fillText("START", pt.x, pt.y + 16);
-                } else {
-                    ctx.fillStyle = '#94a3b8';
-                    ctx.beginPath();
-                    ctx.arc(pt.x, pt.y, 4, 0, Math.PI * 2);
-                    ctx.fill();
-                }
+                ctx.fillStyle = '#94a3b8';
+                ctx.beginPath();
+                ctx.arc(pt.x, pt.y, 4, 0, Math.PI * 2);
+                ctx.fill();
             }
         }
 
@@ -857,10 +824,10 @@
         } else {
             isGameActive = true;
             gameScore = 0;
-            gameTimeRemaining = 60;
+            gameTimeRemaining = 90;
             
             document.getElementById('game-score').innerText = gameScore;
-            document.getElementById('game-timer').innerText = "1:00";
+            document.getElementById('game-timer').innerText = "1:30";
             document.getElementById('game-timer').classList.remove('timer-warning');
             gameBtn.innerText = "End Game ⏹️";
             gameBtn.style.backgroundColor = "#ef4444";
@@ -880,7 +847,7 @@
 
                 if (gameTimeRemaining <= 0) {
                     stopGame();
-                    alert(`⏳ TIME'S UP!\n\nGreat job! You solved ${gameScore} model(s) in 1 minute!`);
+                    alert(`⏳ TIME'S UP!\n\nGreat job! You solved ${gameScore} model(s) in 1 minute 30 seconds!`);
                 }
             }, 1000);
         }
