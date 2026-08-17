@@ -577,21 +577,21 @@
         };
 
         activeBlocks.forEach(b => {
-            // TOP VIEW: Standard Orthographic
+            // TOP VIEW: Standard Orthographic Projection
             // Horizontal axis: x (0 -> col 0, 2 -> col 2)
             // Vertical axis: z (back z=0 -> top row 0, front z=2 -> bottom row 2)
             const topR = b.z; 
             const topC = b.x;
             addSquare('top', topR, topC);
 
-            // FRONT VIEW:
-            // Horizontal axis: x (0 -> col 0, 2 -> col 2)
+            // FRONT VIEW (Looking at FRONT label face):
+            // Horizontal axis: x (left x=0 -> col 0, right x=2 -> col 2)
             // Vertical axis: y (top y=2 -> row 0, bottom y=0 -> row 2)
             const frontR = 2 - b.y;
             const frontC = b.x;
             addSquare('front', frontR, frontC);
 
-            // RIGHT VIEW: Looking from the right side towards the left
+            // RIGHT VIEW (Looking at RIGHT label face):
             // Horizontal axis: z (front z=2 -> col 0, back z=0 -> col 2)
             // Vertical axis: y (top y=2 -> row 0, bottom y=0 -> row 2)
             const rightR = 2 - b.y;
@@ -672,9 +672,8 @@
         return segments;
     }
 
-    // Dynamic grid centering calculations
     function getGridDimensions(canvas) {
-        const padding = 35; // Equal margin around dot matrix
+        const padding = 35; 
         const availableWidth = canvas.width - (padding * 2);
         const spacing = availableWidth / DOT_COLS;
         const offsetX = padding;
@@ -735,7 +734,6 @@
 
         ctx.clearRect(0, 0, width, height);
 
-        // Perfectly centered 4x4 dot matrix
         for (let r = 0; r <= DOT_ROWS; r++) {
             for (let c = 0; c <= DOT_COLS; c++) {
                 const pt = getDotPixel(canvas, r, c);
@@ -759,7 +757,6 @@
             }
         }
 
-        // Active line rubber-band preview
         if (activeDrawing && activeDrawing.view === view) {
             const startP = getDotPixel(canvas, activeDrawing.startDot.r, activeDrawing.startDot.c);
             ctx.strokeStyle = '#3b82f6';
@@ -772,7 +769,6 @@
             ctx.setLineDash([]);
         }
 
-        // Render user-drawn lines
         userLines[view].forEach(line => {
             const p1 = getDotPixel(canvas, line.r1, line.c1);
             const p2 = getDotPixel(canvas, line.r2, line.c2);
