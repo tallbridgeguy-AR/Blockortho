@@ -275,10 +275,10 @@
                 <button class="game-btn" id="btn-start-game">Start Game ⏱️</button>
                 <div class="game-stat">
                     <span class="game-stat-label">TIME</span>
-                    <span class="game-stat-value" id="game-timer">1:30</span>
+                    <span class="game-stat-value" id="game-timer">2:00</span>
                 </div>
                 <div class="game-stat">
-                    <span class="game-stat-label">SOLVED</span>
+                    <span class="game-stat-label">STREAK 🔥</span>
                     <span class="game-stat-value" id="game-score">0</span>
                 </div>
             </div>
@@ -326,8 +326,8 @@
 
 <script>
     const GRID_SIZE = 3;
-    const DOT_ROWS = 3; // 4 dots (indices 0..3)
-    const DOT_COLS = 3; // 4 dots (indices 0..3)
+    const DOT_ROWS = 3;
+    const DOT_COLS = 3;
 
     let scene, camera, renderer, modelGroup;
     let activeBlocks = []; 
@@ -341,8 +341,8 @@
     const defaultRotation = { x: 0.4, y: -0.6 };
 
     let isGameActive = false;
-    let gameScore = 0;
-    let gameTimeRemaining = 90;
+    let streakCount = 0;
+    let gameTimeRemaining = 120; // 2 Minutes
     let gameTimerInterval = null;
 
     let activeDrawing = null; 
@@ -563,17 +563,14 @@
         };
 
         activeBlocks.forEach(b => {
-            // TOP VIEW
             const topR = b.z; 
             const topC = b.x;
             addSquare('top', topR, topC);
 
-            // FRONT VIEW
             const frontR = 2 - b.y;
             const frontC = b.x;
             addSquare('front', frontR, frontC);
 
-            // RIGHT VIEW
             const rightR = 2 - b.y;
             const rightC = 2 - b.z;
             addSquare('right', rightR, rightC);
@@ -801,16 +798,20 @@
         });
 
         if (isCompleteAndCorrect) {
+            streakCount++;
+            document.getElementById('game-score').innerText = streakCount;
+
             if (isGameActive) {
-                gameScore++;
-                document.getElementById('game-score').innerText = gameScore;
                 setTimeout(generateNewSolidModel, 400);
             } else {
-                alert('🎉 Excellent! All orthographic projections are drawn correctly!');
+                alert(`🎉 Excellent! Streak: ${streakCount}`);
             }
         } else {
+            streakCount = 0; // Reset streak on mistake
+            document.getElementById('game-score').innerText = streakCount;
+
             if (!isGameActive) {
-                alert('❌ Not quite right yet!\n\n• Green lines = Correct\n• Red lines = Extra or incorrect lines');
+                alert('❌ Not quite right yet!\n\nStreak reset to 0.\n• Green lines = Correct\n• Red lines = Extra or incorrect lines');
             }
         }
     }
@@ -820,14 +821,14 @@
 
         if (isGameActive) {
             stopGame();
-            alert(`Game Stopped! Final Score: ${gameScore} model(s) solved.`);
+            alert(`Game Stopped! Best Streak: ${streakCount}`);
         } else {
             isGameActive = true;
-            gameScore = 0;
-            gameTimeRemaining = 90;
+            streakCount = 0;
+            gameTimeRemaining = 120; // 2 Minutes
             
-            document.getElementById('game-score').innerText = gameScore;
-            document.getElementById('game-timer').innerText = "1:30";
+            document.getElementById('game-score').innerText = streakCount;
+            document.getElementById('game-timer').innerText = "2:00";
             document.getElementById('game-timer').classList.remove('timer-warning');
             gameBtn.innerText = "End Game ⏹️";
             gameBtn.style.backgroundColor = "#ef4444";
@@ -841,13 +842,13 @@
                 const secs = gameTimeRemaining % 60;
                 document.getElementById('game-timer').innerText = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
 
-                if (gameTimeRemaining <= 10) {
+                if (gameTimeRemaining <= 15) {
                     document.getElementById('game-timer').classList.add('timer-warning');
                 }
 
                 if (gameTimeRemaining <= 0) {
                     stopGame();
-                    alert(`⏳ TIME'S UP!\n\nGreat job! You solved ${gameScore} model(s) in 1 minute 30 seconds!`);
+                    alert(`⏳ TIME'S UP!\n\nGreat job! Your final streak was ${streakCount} without errors!`);
                 }
             }, 1000);
         }
