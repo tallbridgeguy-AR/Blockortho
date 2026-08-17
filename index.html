@@ -154,7 +154,7 @@
   <div class="app-container">
     <!-- Left Panel: Rotatable 3D Solid Reference -->
     <div class="panel left-panel">
-      <div class="grid-title" id="blockTitle" style="margin-bottom: 5px;">Block 1 / 3</div>
+      <div class="grid-title" id="blockTitle" style="margin-bottom: 5px;">Block 1: Step Block</div>
       <canvas id="isoCanvas" width="320" height="280"></canvas>
       
       <div class="scale-info">
@@ -182,7 +182,7 @@
         <canvas id="topCanvas" width="160" height="160"></canvas>
       </div>
 
-      <!-- Info panel -->
+      <!-- Instructions Panel -->
       <div class="grid-box" style="justify-content: center; text-align: center; color: #555; font-size: 0.75rem;">
         <p><strong>Instructions:</strong></p>
         <p style="margin-top: 3px;">Drag dots to draw orthographic views.</p>
@@ -210,64 +210,118 @@
   </div>
 
   <script>
-    // --- 1. Block Models Database ---
+    // --- 1. Block Models Database (Standardized Coordinates) ---
+    // World space: X = Width (Left->Right), Y = Height (Bottom->Top), Z = Depth (Back->Front)
     const BLOCKS = [
       // Block 0: Stepped Block
       {
         name: "Block 1: Step Block",
+        // Polygons defined with CCW vertex order so surface normal points outward
         rawPolygons: [
-          { pts: [[-1,0,-2], [1,0,-2], [1,0,2], [-1,0,2]], color: '#cbd5e0' },
-          { pts: [[-1,0,-2], [1,0,-2], [1,4,-2], [-1,4,-2]], color: '#a0aec0' },
-          { pts: [[-1,0,2], [1,0,2], [1,2,2], [-1,2,2]], color: '#feb2b2' },
-          { pts: [[-1,2,0], [1,2,0], [1,4,0], [-1,4,0]], color: '#feb2b2' },
-          { pts: [[-1,2,0], [1,2,0], [1,2,2], [-1,2,2]], color: '#bee3f8' },
-          { pts: [[-1,4,-2], [1,4,-2], [1,4,0], [-1,4,0]], color: '#bee3f8' },
-          { pts: [[-1,0,-2], [-1,0,2], [-1,2,2], [-1,2,0], [-1,4,0], [-1,4,-2]], color: '#e2e8f0' },
-          { pts: [[1,0,0], [1,0,2], [1,2,2], [1,2,0]], color: '#fefcbf' },
-          { pts: [[1,0,-2], [1,0,0], [1,4,0], [1,4,-2]], color: '#fefcbf' }
+          // Bottom face
+          { pts: [[0,0,0], [2,0,0], [2,0,4], [0,0,4]], color: '#cbd5e0' },
+          // Back face
+          { pts: [[0,0,0], [0,4,0], [2,4,0], [2,0,0]], color: '#a0aec0' },
+          // Left Side profile face
+          { pts: [[0,0,0], [0,0,4], [0,2,4], [0,2,2], [0,4,2], [0,4,0]], color: '#e2e8f0' },
+          // Right Side profile face
+          { pts: [[2,0,0], [2,4,0], [2,4,2], [2,2,2], [2,2,4], [2,0,4]], color: '#e2e8f0' },
+          // Front lower step face
+          { pts: [[0,0,4], [2,0,4], [2,2,4], [0,2,4]], color: '#feb2b2' },
+          // Front upper step face
+          { pts: [[0,2,2], [2,2,2], [2,4,2], [0,4,2]], color: '#feb2b2' },
+          // Top lower step face
+          { pts: [[0,2,2], [0,2,4], [2,2,4], [2,2,2]], color: '#bee3f8' },
+          // Top upper step face
+          { pts: [[0,4,0], [0,4,2], [2,4,2], [2,4,0]], color: '#bee3f8' }
         ],
         solution: {
-          top: [[[1,1],[3,1]], [[3,1],[3,5]], [[3,5],[1,5]], [[1,5],[1,1]], [[1,3],[3,3]]],
-          front: [[[1,5],[3,5]], [[3,5],[3,1]], [[3,1],[2,1]], [[2,1],[2,3]], [[2,3],[1,3]], [[1,3],[1,5]], [[2,3],[3,3]]],
-          right: [[[1,1],[5,1]], [[5,1],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]], [[1,3],[5,3]]]
+          // Top View (X: col 2..4, Z: row 1..5)
+          top: [
+            [[2,1],[4,1]], [[4,1],[4,5]], [[4,5],[2,5]], [[2,5],[2,1]], [[2,3],[4,3]]
+          ],
+          // Front View (X: col 2..4, Y: row 1..5 inverted)
+          front: [
+            [[2,1],[4,1]], [[4,1],[4,5]], [[4,5],[2,5]], [[2,5],[2,1]], [[2,3],[4,3]]
+          ],
+          // Right View (Z: col 1..5, Y: row 1..5 inverted)
+          right: [
+            [[1,5],[5,5]], [[5,5],[5,1]], [[5,1],[3,1]], [[3,1],[3,3]], [[3,3],[1,3]], [[1,3],[1,5]]
+          ]
         }
       },
       // Block 1: L-Shaped Corner Block
       {
         name: "Block 2: L-Corner Block",
         rawPolygons: [
-          { pts: [[-2,0,-2], [2,0,-2], [2,0,2], [-2,0,2]], color: '#cbd5e0' },
-          { pts: [[-2,0,-2], [2,0,-2], [2,4,-2], [-2,4,-2]], color: '#a0aec0' },
-          { pts: [[-2,0,2], [0,0,2], [0,2,2], [-2,2,2]], color: '#feb2b2' },
-          { pts: [[0,0,0], [2,0,0], [2,4,0], [0,4,0]], color: '#feb2b2' },
-          { pts: [[-2,2,2], [0,2,2], [0,2,0], [-2,2,0]], color: '#bee3f8' },
-          { pts: [[-2,4,0], [2,4,0], [2,4,-2], [-2,4,-2]], color: '#bee3f8' },
-          { pts: [[-2,0,-2], [-2,0,2], [-2,2,2], [-2,2,0], [-2,4,0], [-2,4,-2]], color: '#e2e8f0' },
-          { pts: [[2,0,-2], [2,0,0], [2,4,0], [2,4,-2]], color: '#fefcbf' }
+          // Bottom
+          { pts: [[0,0,0], [4,0,0], [4,0,4], [0,0,4]], color: '#cbd5e0' },
+          // Back
+          { pts: [[0,0,0], [0,4,0], [4,4,0], [4,0,0]], color: '#a0aec0' },
+          // Left side
+          { pts: [[0,0,0], [0,0,4], [0,2,4], [0,2,2], [0,4,2], [0,4,0]], color: '#e2e8f0' },
+          // Right side
+          { pts: [[4,0,0], [4,4,0], [4,4,2], [4,2,2], [4,2,4], [4,0,4]], color: '#e2e8f0' },
+          // Front low
+          { pts: [[0,0,4], [4,0,4], [4,2,4], [0,2,4]], color: '#feb2b2' },
+          // Front high
+          { pts: [[0,2,2], [2,2,2], [2,4,2], [0,4,2]], color: '#feb2b2' },
+          // Top low
+          { pts: [[2,2,2], [2,2,4], [4,2,4], [4,2,2]], color: '#bee3f8' },
+          // Top high
+          { pts: [[0,4,0], [0,4,2], [2,4,2], [2,4,0]], color: '#bee3f8' },
+          // Inner vertical right face
+          { pts: [[2,2,2], [2,4,2], [2,4,0], [2,2,0]], color: '#fefcbf' }
         ],
         solution: {
-          top: [[[1,1],[5,1]], [[5,1],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]], [[1,3],[5,3]], [[3,3],[3,5]]],
-          front: [[[1,5],[5,5]], [[5,5],[5,1]], [[5,1],[3,1]], [[3,1],[3,3]], [[3,3],[1,3]], [[1,3],[1,5]]],
-          right: [[[1,1],[5,1]], [[5,1],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]], [[3,1],[3,5]]]
+          top: [
+            [[1,1],[5,1]], [[5,1],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]], [[1,3],[5,3]], [[3,1],[3,3]]
+          ],
+          front: [
+            [[1,5],[5,5]], [[5,5],[5,3]], [[5,3],[3,3]], [[3,3],[3,1]], [[3,1],[1,1]], [[1,1],[1,5]], [[3,3],[5,3]]
+          ],
+          right: [
+            [[1,5],[5,5]], [[5,5],[5,1]], [[5,1],[3,1]], [[3,1],[3,3]], [[3,3],[1,3]], [[1,3],[1,5]]
+          ]
         }
       },
       // Block 2: U-Channel Block
       {
         name: "Block 3: U-Channel Block",
         rawPolygons: [
-          { pts: [[-2,0,-2], [2,0,-2], [2,0,2], [-2,0,2]], color: '#cbd5e0' },
-          { pts: [[-2,0,2], [-1,0,2], [-1,4,2], [-2,4,2]], color: '#feb2b2' },
-          { pts: [[1,0,2], [2,0,2], [2,4,2], [1,4,2]], color: '#feb2b2' },
-          { pts: [[-1,2,-2], [1,2,-2], [1,2,2], [-1,2,2]], color: '#bee3f8' },
-          { pts: [[-2,4,-2], [-1,4,-2], [-1,4,2], [-2,4,2]], color: '#bee3f8' },
-          { pts: [[1,4,-2], [2,4,-2], [2,4,2], [1,4,2]], color: '#bee3f8' },
-          { pts: [[-2,0,-2], [-2,0,2], [-2,4,2], [-2,4,-2]], color: '#e2e8f0' },
-          { pts: [[2,0,-2], [2,0,2], [2,4,2], [2,4,-2]], color: '#fefcbf' }
+          // Bottom
+          { pts: [[0,0,0], [4,0,0], [4,0,4], [0,0,4]], color: '#cbd5e0' },
+          // Back
+          { pts: [[0,0,0], [0,4,0], [4,4,0], [4,0,0]], color: '#a0aec0' },
+          // Left
+          { pts: [[0,0,0], [0,0,4], [0,4,4], [0,4,0]], color: '#e2e8f0' },
+          // Right
+          { pts: [[4,0,0], [4,4,0], [4,4,4], [4,0,4]], color: '#e2e8f0' },
+          // Front Left tower
+          { pts: [[0,0,4], [1,0,4], [1,4,4], [0,4,4]], color: '#feb2b2' },
+          // Front Right tower
+          { pts: [[3,0,4], [4,0,4], [4,4,4], [3,4,4]], color: '#feb2b2' },
+          // Channel bottom horizontal surface
+          { pts: [[1,2,0], [1,2,4], [3,2,4], [3,2,0]], color: '#bee3f8' },
+          // Top Left surface
+          { pts: [[0,4,0], [0,4,4], [1,4,4], [1,4,0]], color: '#bee3f8' },
+          // Top Right surface
+          { pts: [[3,4,0], [3,4,4], [4,4,4], [4,4,0]], color: '#bee3f8' },
+          // Channel Left inner wall
+          { pts: [[1,2,0], [1,4,0], [1,4,4], [1,2,4]], color: '#fefcbf' },
+          // Channel Right inner wall
+          { pts: [[3,2,0], [3,2,4], [3,4,4], [3,4,0]], color: '#fefcbf' }
         ],
         solution: {
-          top: [[[1,1],[5,1]], [[5,1],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]], [[2,1],[2,5]], [[4,1],[4,5]]],
-          front: [[[1,1],[2,1]], [[2,1],[2,3]], [[2,3],[4,3]], [[4,3],[4,1]], [[4,1],[5,1]], [[5,1],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]]],
-          right: [[[1,1],[5,1]], [[5,1],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]], [[1,3],[5,3]]]
+          top: [
+            [[1,1],[5,1]], [[5,1],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]], [[2,1],[2,5]], [[4,1],[4,5]]
+          ],
+          front: [
+            [[1,1],[2,1]], [[2,1],[2,3]], [[2,3],[4,3]], [[4,3],[4,1]], [[4,1],[5,1]], [[5,1],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]]
+          ],
+          right: [
+            [[1,1],[5,1]], [[5,1],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]], [[1,3],[5,3]]
+          ]
         }
       }
     ];
@@ -278,49 +332,64 @@
     const isoCanvas = document.getElementById('isoCanvas');
     const isoCtx = isoCanvas.getContext('2d');
 
-    const DEFAULT_ROT_X = 0.5;
-    const DEFAULT_ROT_Y = -0.6;
+    const DEFAULT_ROT_X = 0.45;
+    const DEFAULT_ROT_Y = -0.65;
     let rotX = DEFAULT_ROT_X;
     let rotY = DEFAULT_ROT_Y;
     let isDraggingCam = false;
     let lastMouseX = 0, lastMouseY = 0;
 
+    // Center model around (0,0,0) for smooth rotation
     function rotate3D(x, y, z, rx, ry) {
-      let x1 = x * Math.cos(ry) + z * Math.sin(ry);
-      let z1 = -x * Math.sin(ry) + z * Math.cos(ry);
-      let y1 = y;
+      const cx = x - 2, cy = y - 2, cz = z - 2;
+      
+      let x1 = cx * Math.cos(ry) + cz * Math.sin(ry);
+      let z1 = -cx * Math.sin(ry) + cz * Math.cos(ry);
+      let y1 = cy;
       let y2 = y1 * Math.cos(rx) - z1 * Math.sin(rx);
       let z2 = y1 * Math.sin(rx) + z1 * Math.cos(rx);
+      
       return { x: x1, y: y2, z: z2 };
     }
 
-    function drawFloorGrid(cx, cy, scale) {
-      const gridMinX = -3, gridMaxX = 3;
-      const gridMinZ = -3, gridMaxZ = 3;
-
-      isoCtx.strokeStyle = '#cbd5e0';
+    // Render 3D Grid Guides (Floor + Back & Left Vertical Walls)
+    function draw3DGrids(cx, cy, scale) {
       isoCtx.lineWidth = 1;
 
-      for (let x = gridMinX; x <= gridMaxX; x++) {
-        let p1 = rotate3D(x, 0, gridMinZ, rotX, rotY);
-        let p2 = rotate3D(x, 0, gridMaxZ, rotX, rotY);
+      // Base Floor Grid (Y = 0)
+      for (let i = 0; i <= 4; i++) {
+        // Grid lines parallel to Z
+        let p1 = rotate3D(i, 0, 0, rotX, rotY);
+        let p2 = rotate3D(i, 0, 4, rotX, rotY);
+        isoCtx.strokeStyle = '#cbd5e0';
+        isoCtx.beginPath();
+        isoCtx.moveTo(cx + p1.x * scale, cy - p1.y * scale);
+        isoCtx.lineTo(cx + p2.x * scale, cy - p2.y * scale);
+        isoCtx.stroke();
+
+        // Grid lines parallel to X
+        p1 = rotate3D(0, 0, i, rotX, rotY);
+        p2 = rotate3D(4, 0, i, rotX, rotY);
         isoCtx.beginPath();
         isoCtx.moveTo(cx + p1.x * scale, cy - p1.y * scale);
         isoCtx.lineTo(cx + p2.x * scale, cy - p2.y * scale);
         isoCtx.stroke();
       }
 
-      for (let z = gridMinZ; z <= gridMaxZ; z++) {
-        let p1 = rotate3D(gridMinX, 0, z, rotX, rotY);
-        let p2 = rotate3D(gridMaxX, 0, z, rotX, rotY);
+      // Vertical Back Grid Plane (Z = 0) - Helps students identify HEIGHT scale
+      for (let h = 0; h <= 4; h++) {
+        let p1 = rotate3D(0, h, 0, rotX, rotY);
+        let p2 = rotate3D(4, h, 0, rotX, rotY);
+        isoCtx.strokeStyle = 'rgba(160, 174, 192, 0.4)';
         isoCtx.beginPath();
         isoCtx.moveTo(cx + p1.x * scale, cy - p1.y * scale);
         isoCtx.lineTo(cx + p2.x * scale, cy - p2.y * scale);
         isoCtx.stroke();
       }
 
-      for (let x = gridMinX; x <= gridMaxX; x++) {
-        for (let z = gridMinZ; z <= gridMaxZ; z++) {
+      // Grid Dots
+      for (let x = 0; x <= 4; x++) {
+        for (let z = 0; z <= 4; z++) {
           let p = rotate3D(x, 0, z, rotX, rotY);
           isoCtx.beginPath();
           isoCtx.arc(cx + p.x * scale, cy - p.y * scale, 2, 0, Math.PI * 2);
@@ -330,30 +399,52 @@
       }
     }
 
+    function computeNormal(pts) {
+      let v0 = pts[0], v1 = pts[1], v2 = pts[2];
+      let ax = v1[0] - v0[0], ay = v1[1] - v0[1], az = v1[2] - v0[2];
+      let bx = v2[0] - v0[0], by = v2[1] - v0[1], bz = v2[2] - v0[2];
+      return {
+        x: ay * bz - az * by,
+        y: az * bx - ax * bz,
+        z: ax * by - ay * bx
+      };
+    }
+
     function drawIsometricBlock() {
       isoCtx.clearRect(0, 0, isoCanvas.width, isoCanvas.height);
       const cx = isoCanvas.width / 2;
-      const cy = isoCanvas.height / 2 + 25;
-      const scale = 25;
+      const cy = isoCanvas.height / 2 + 10;
+      const scale = 28;
 
-      drawFloorGrid(cx, cy, scale);
+      draw3DGrids(cx, cy, scale);
 
       const model = BLOCKS[currentBlockIdx];
 
-      let projectedPolys = model.rawPolygons.map(poly => {
-        let transformedPts = poly.pts.map(pt => {
-          let r = rotate3D(pt[0], pt[1], pt[2], rotX, rotY);
-          return { x: cx + r.x * scale, y: cy - r.y * scale, z: r.z };
-        });
+      // Process and filter backfacing polygons
+      let visiblePolys = [];
 
-        let avgZ = transformedPts.reduce((sum, p) => sum + p.z, 0) / transformedPts.length;
+      model.rawPolygons.forEach(poly => {
+        let norm = computeNormal(poly.pts);
+        let rotNorm = rotate3D(norm.x + 2, norm.y + 2, norm.z + 2, rotX, rotY);
+        let originRot = rotate3D(2, 2, 2, rotX, rotY);
+        let viewNormZ = rotNorm.z - originRot.z;
 
-        return { pts: transformedPts, color: poly.color, avgZ: avgZ };
+        // Render face if pointing towards the viewer (Cull backfaces)
+        if (viewNormZ > -0.01) {
+          let transformedPts = poly.pts.map(pt => {
+            let r = rotate3D(pt[0], pt[1], pt[2], rotX, rotY);
+            return { x: cx + r.x * scale, y: cy - r.y * scale, z: r.z };
+          });
+
+          let avgZ = transformedPts.reduce((sum, p) => sum + p.z, 0) / transformedPts.length;
+          visiblePolys.push({ pts: transformedPts, color: poly.color, avgZ: avgZ });
+        }
       });
 
-      projectedPolys.sort((a, b) => a.avgZ - b.avgZ);
+      // Painter's algorithm depth sort
+      visiblePolys.sort((a, b) => a.avgZ - b.avgZ);
 
-      projectedPolys.forEach(poly => {
+      visiblePolys.forEach(poly => {
         isoCtx.beginPath();
         poly.pts.forEach((p, idx) => {
           if (idx === 0) isoCtx.moveTo(p.x, p.y);
@@ -372,12 +463,12 @@
 
     function drawViewLabels(cx, cy, scale) {
       const labels = [
-        { text: 'FRONT VIEW →', pos: [0, 1, 3.8], color: '#c53030' },
-        { text: 'TOP VIEW ↓', pos: [0, 5.2, -1], color: '#2b6cb0' },
-        { text: '← RIGHT VIEW', pos: [3.2, 1, 0], color: '#d69e2e' }
+        { text: 'FRONT VIEW ↓', pos: [2, 0, 5.2], color: '#c53030' },
+        { text: 'TOP VIEW', pos: [2, 5.2, 2], color: '#2b6cb0' },
+        { text: '← RIGHT VIEW', pos: [5.2, 0, 2], color: '#d69e2e' }
       ];
 
-      isoCtx.font = 'bold 12px sans-serif';
+      isoCtx.font = 'bold 11px sans-serif';
       isoCtx.textAlign = 'center';
 
       labels.forEach(lbl => {
@@ -529,7 +620,7 @@
           this.ctx.strokeStyle = '#38a169'; // Green line
           this.ctx.lineWidth = 5;
           this.ctx.lineCap = 'round';
-          this.ctx.globalAlpha = 0.5; // Semitransparent so student drawing stays visible
+          this.ctx.globalAlpha = 0.5;
 
           solutionLines.forEach(seg => {
             let x1 = OFFSET + seg[0][0] * GRID_SPACING;
@@ -557,7 +648,7 @@
           this.ctx.stroke();
         });
 
-        // Rubberband preview
+        // Rubberband preview line
         if (this.isDrawing) {
           this.ctx.strokeStyle = '#0066cc';
           this.ctx.beginPath();
@@ -581,7 +672,6 @@
     }
 
     function checkAnswer() {
-      // Enable solution overlay in green across all view canvases
       topGrid.showSolutionOverlay = true;
       frontGrid.showSolutionOverlay = true;
       rightGrid.showSolutionOverlay = true;
@@ -637,7 +727,7 @@
       drawIsometricBlock();
     }
 
-    // Button Listeners
+    // Button Event Listeners
     document.getElementById('checkBtn').addEventListener('click', checkAnswer);
     
     document.getElementById('nextBtn').addEventListener('click', () => {
