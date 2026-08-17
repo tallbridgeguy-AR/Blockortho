@@ -185,7 +185,7 @@
       <!-- Instructions Panel -->
       <div class="grid-box" style="justify-content: center; text-align: center; color: #555; font-size: 0.75rem;">
         <p><strong>Instructions:</strong></p>
-        <p style="margin-top: 3px;">Drag dots to draw orthographic views.</p>
+        <p style="margin-top: 3px;">Start drawing from the <span style="color:#e53e3e; font-weight:bold;">RED START DOT</span> on each grid.</p>
         <p style="margin-top: 3px;">Click <strong>Check Answer</strong> to reveal correct lines in <span style="color:#38a169; font-weight:bold;">GREEN</span>.</p>
       </div>
 
@@ -210,67 +210,46 @@
   </div>
 
   <script>
-    // --- 1. Block Models Database (Standardized Coordinates) ---
-    // World space: X = Width (Left->Right), Y = Height (Bottom->Top), Z = Depth (Back->Front)
+    // --- 1. Block Models Database ---
     const BLOCKS = [
-      // Block 0: Stepped Block
       {
         name: "Block 1: Step Block",
-        // Polygons defined with CCW vertex order so surface normal points outward
         rawPolygons: [
-          // Bottom face
           { pts: [[0,0,0], [2,0,0], [2,0,4], [0,0,4]], color: '#cbd5e0' },
-          // Back face
           { pts: [[0,0,0], [0,4,0], [2,4,0], [2,0,0]], color: '#a0aec0' },
-          // Left Side profile face
           { pts: [[0,0,0], [0,0,4], [0,2,4], [0,2,2], [0,4,2], [0,4,0]], color: '#e2e8f0' },
-          // Right Side profile face
           { pts: [[2,0,0], [2,4,0], [2,4,2], [2,2,2], [2,2,4], [2,0,4]], color: '#e2e8f0' },
-          // Front lower step face
           { pts: [[0,0,4], [2,0,4], [2,2,4], [0,2,4]], color: '#feb2b2' },
-          // Front upper step face
           { pts: [[0,2,2], [2,2,2], [2,4,2], [0,4,2]], color: '#feb2b2' },
-          // Top lower step face
           { pts: [[0,2,2], [0,2,4], [2,2,4], [2,2,2]], color: '#bee3f8' },
-          // Top upper step face
           { pts: [[0,4,0], [0,4,2], [2,4,2], [2,4,0]], color: '#bee3f8' }
         ],
         solution: {
-          // Top View (X: col 2..4, Z: row 1..5)
+          // Top View (Col 1->3, Row 1->5)
           top: [
-            [[2,1],[4,1]], [[4,1],[4,5]], [[4,5],[2,5]], [[2,5],[2,1]], [[2,3],[4,3]]
+            [[1,1],[3,1]], [[3,1],[3,5]], [[3,5],[1,5]], [[1,5],[1,1]], [[1,3],[3,3]]
           ],
-          // Front View (X: col 2..4, Y: row 1..5 inverted)
+          // Front View (Col 1->3, Row 1->5)
           front: [
-            [[2,1],[4,1]], [[4,1],[4,5]], [[4,5],[2,5]], [[2,5],[2,1]], [[2,3],[4,3]]
+            [[1,1],[3,1]], [[3,1],[3,5]], [[3,5],[1,5]], [[1,5],[1,1]], [[1,3],[3,3]]
           ],
-          // Right View (Z: col 1..5, Y: row 1..5 inverted)
+          // Right View (Col 1->5, Row 1->5)
           right: [
             [[1,5],[5,5]], [[5,5],[5,1]], [[5,1],[3,1]], [[3,1],[3,3]], [[3,3],[1,3]], [[1,3],[1,5]]
           ]
         }
       },
-      // Block 1: L-Shaped Corner Block
       {
         name: "Block 2: L-Corner Block",
         rawPolygons: [
-          // Bottom
           { pts: [[0,0,0], [4,0,0], [4,0,4], [0,0,4]], color: '#cbd5e0' },
-          // Back
           { pts: [[0,0,0], [0,4,0], [4,4,0], [4,0,0]], color: '#a0aec0' },
-          // Left side
           { pts: [[0,0,0], [0,0,4], [0,2,4], [0,2,2], [0,4,2], [0,4,0]], color: '#e2e8f0' },
-          // Right side
           { pts: [[4,0,0], [4,4,0], [4,4,2], [4,2,2], [4,2,4], [4,0,4]], color: '#e2e8f0' },
-          // Front low
           { pts: [[0,0,4], [4,0,4], [4,2,4], [0,2,4]], color: '#feb2b2' },
-          // Front high
           { pts: [[0,2,2], [2,2,2], [2,4,2], [0,4,2]], color: '#feb2b2' },
-          // Top low
           { pts: [[2,2,2], [2,2,4], [4,2,4], [4,2,2]], color: '#bee3f8' },
-          // Top high
           { pts: [[0,4,0], [0,4,2], [2,4,2], [2,4,0]], color: '#bee3f8' },
-          // Inner vertical right face
           { pts: [[2,2,2], [2,4,2], [2,4,0], [2,2,0]], color: '#fefcbf' }
         ],
         solution: {
@@ -285,31 +264,19 @@
           ]
         }
       },
-      // Block 2: U-Channel Block
       {
         name: "Block 3: U-Channel Block",
         rawPolygons: [
-          // Bottom
           { pts: [[0,0,0], [4,0,0], [4,0,4], [0,0,4]], color: '#cbd5e0' },
-          // Back
           { pts: [[0,0,0], [0,4,0], [4,4,0], [4,0,0]], color: '#a0aec0' },
-          // Left
           { pts: [[0,0,0], [0,0,4], [0,4,4], [0,4,0]], color: '#e2e8f0' },
-          // Right
           { pts: [[4,0,0], [4,4,0], [4,4,4], [4,0,4]], color: '#e2e8f0' },
-          // Front Left tower
           { pts: [[0,0,4], [1,0,4], [1,4,4], [0,4,4]], color: '#feb2b2' },
-          // Front Right tower
           { pts: [[3,0,4], [4,0,4], [4,4,4], [3,4,4]], color: '#feb2b2' },
-          // Channel bottom horizontal surface
           { pts: [[1,2,0], [1,2,4], [3,2,4], [3,2,0]], color: '#bee3f8' },
-          // Top Left surface
           { pts: [[0,4,0], [0,4,4], [1,4,4], [1,4,0]], color: '#bee3f8' },
-          // Top Right surface
           { pts: [[3,4,0], [3,4,4], [4,4,4], [4,4,0]], color: '#bee3f8' },
-          // Channel Left inner wall
           { pts: [[1,2,0], [1,4,0], [1,4,4], [1,2,4]], color: '#fefcbf' },
-          // Channel Right inner wall
           { pts: [[3,2,0], [3,2,4], [3,4,4], [3,4,0]], color: '#fefcbf' }
         ],
         solution: {
@@ -339,26 +306,21 @@
     let isDraggingCam = false;
     let lastMouseX = 0, lastMouseY = 0;
 
-    // Center model around (0,0,0) for smooth rotation
     function rotate3D(x, y, z, rx, ry) {
       const cx = x - 2, cy = y - 2, cz = z - 2;
-      
       let x1 = cx * Math.cos(ry) + cz * Math.sin(ry);
       let z1 = -cx * Math.sin(ry) + cz * Math.cos(ry);
       let y1 = cy;
       let y2 = y1 * Math.cos(rx) - z1 * Math.sin(rx);
       let z2 = y1 * Math.sin(rx) + z1 * Math.cos(rx);
-      
       return { x: x1, y: y2, z: z2 };
     }
 
-    // Render 3D Grid Guides (Floor + Back & Left Vertical Walls)
     function draw3DGrids(cx, cy, scale) {
       isoCtx.lineWidth = 1;
 
-      // Base Floor Grid (Y = 0)
+      // Base Floor Grid
       for (let i = 0; i <= 4; i++) {
-        // Grid lines parallel to Z
         let p1 = rotate3D(i, 0, 0, rotX, rotY);
         let p2 = rotate3D(i, 0, 4, rotX, rotY);
         isoCtx.strokeStyle = '#cbd5e0';
@@ -367,7 +329,6 @@
         isoCtx.lineTo(cx + p2.x * scale, cy - p2.y * scale);
         isoCtx.stroke();
 
-        // Grid lines parallel to X
         p1 = rotate3D(0, 0, i, rotX, rotY);
         p2 = rotate3D(4, 0, i, rotX, rotY);
         isoCtx.beginPath();
@@ -376,7 +337,7 @@
         isoCtx.stroke();
       }
 
-      // Vertical Back Grid Plane (Z = 0) - Helps students identify HEIGHT scale
+      // Vertical Back Grid Plane (Z = 0)
       for (let h = 0; h <= 4; h++) {
         let p1 = rotate3D(0, h, 0, rotX, rotY);
         let p2 = rotate3D(4, h, 0, rotX, rotY);
@@ -419,8 +380,6 @@
       draw3DGrids(cx, cy, scale);
 
       const model = BLOCKS[currentBlockIdx];
-
-      // Process and filter backfacing polygons
       let visiblePolys = [];
 
       model.rawPolygons.forEach(poly => {
@@ -429,7 +388,6 @@
         let originRot = rotate3D(2, 2, 2, rotX, rotY);
         let viewNormZ = rotNorm.z - originRot.z;
 
-        // Render face if pointing towards the viewer (Cull backfaces)
         if (viewNormZ > -0.01) {
           let transformedPts = poly.pts.map(pt => {
             let r = rotate3D(pt[0], pt[1], pt[2], rotX, rotY);
@@ -441,7 +399,6 @@
         }
       });
 
-      // Painter's algorithm depth sort
       visiblePolys.sort((a, b) => a.avgZ - b.avgZ);
 
       visiblePolys.forEach(poly => {
@@ -485,7 +442,7 @@
       });
     }
 
-    // Camera Handlers
+    // Camera Controls
     function startCamDrag(e) {
       isDraggingCam = true;
       let pos = getEventPos(e);
@@ -524,7 +481,7 @@
     window.addEventListener('touchmove', moveCamDrag, { passive: false });
     window.addEventListener('touchend', endCamDrag, { passive: false });
 
-    // --- 3. Drawing Grid with Solution Overlay ---
+    // --- 3. Drawing Grid with Red Anchor Marker ---
     const GRID_SPACING = 20;
     const GRID_ROWS = 7;
     const GRID_COLS = 7;
@@ -614,10 +571,23 @@
           }
         }
 
+        // RED ANCHOR / START DOT (at Col 1, Row 5 - Bottom Left Corner of block)
+        const anchorX = OFFSET + 1 * GRID_SPACING;
+        const anchorY = OFFSET + 5 * GRID_SPACING;
+
+        this.ctx.beginPath();
+        this.ctx.arc(anchorX, anchorY, 5, 0, Math.PI * 2);
+        this.ctx.fillStyle = '#e53e3e';
+        this.ctx.fill();
+
+        this.ctx.font = 'bold 9px sans-serif';
+        this.ctx.fillStyle = '#e53e3e';
+        this.ctx.fillText("START", anchorX - 12, anchorY + 14);
+
         // Optional Solution Overlay in Green
         if (this.showSolutionOverlay) {
           const solutionLines = BLOCKS[currentBlockIdx].solution[this.viewType];
-          this.ctx.strokeStyle = '#38a169'; // Green line
+          this.ctx.strokeStyle = '#38a169';
           this.ctx.lineWidth = 5;
           this.ctx.lineCap = 'round';
           this.ctx.globalAlpha = 0.5;
@@ -748,7 +718,7 @@
       drawIsometricBlock();
     });
 
-    // Initialize App with Block 1
+    // Initialize App
     loadBlock(0);
   </script>
 </body>
