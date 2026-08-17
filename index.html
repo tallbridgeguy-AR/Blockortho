@@ -775,56 +775,40 @@
 
         // Axis Grid Labels
         this.ctx.font = '9px sans-serif';
-        this.ctx.fillStyle = '#718096';
+        this.ctx.fillStyle = '#a0aec0';
         this.ctx.textAlign = 'center';
         for (let c = 0; c < GRID_COLS; c++) {
-          this.ctx.fillText(c, OFFSET + c * GRID_SPACING, OFFSET - 8);
+          this.ctx.fillText(c, OFFSET + c * GRID_SPACING, 12);
         }
         this.ctx.textAlign = 'right';
         for (let r = 0; r < GRID_ROWS; r++) {
-          this.ctx.fillText(r, OFFSET - 8, OFFSET + r * GRID_SPACING + 3);
+          this.ctx.fillText(r, 15, OFFSET + r * GRID_SPACING + 3);
         }
 
-        // RED ANCHOR MARKER (At Col 1, Row 5 - Bottom Left)
-        const anchorX = OFFSET + 1 * GRID_SPACING;
-        const anchorY = OFFSET + 5 * GRID_SPACING;
-
+        // Red Origin/Start Point Dot (Point [1,1])
         this.ctx.beginPath();
-        this.ctx.arc(anchorX, anchorY, 5, 0, Math.PI * 2);
+        this.ctx.arc(OFFSET + 1 * GRID_SPACING, OFFSET + 1 * GRID_SPACING, 4, 0, Math.PI * 2);
         this.ctx.fillStyle = '#e53e3e';
         this.ctx.fill();
 
-        this.ctx.font = 'bold 9px sans-serif';
-        this.ctx.fillStyle = '#e53e3e';
-        this.ctx.textAlign = 'center';
-        this.ctx.fillText("START", anchorX, anchorY + 14);
-
         // Solution Overlay
         if (this.showSolutionOverlay) {
-          const solutionLines = BLOCKS[currentBlockIdx].solution[this.viewType];
-          this.ctx.strokeStyle = '#38a169';
-          this.ctx.lineWidth = 5;
+          const solLines = BLOCKS[currentBlockIdx].solution[this.viewType];
+          this.ctx.strokeStyle = 'rgba(56, 161, 105, 0.4)';
+          this.ctx.lineWidth = 6;
           this.ctx.lineCap = 'round';
-          this.ctx.globalAlpha = 0.5;
 
-          solutionLines.forEach(seg => {
-            let x1 = OFFSET + seg[0][0] * GRID_SPACING;
-            let y1 = OFFSET + seg[0][1] * GRID_SPACING;
-            let x2 = OFFSET + seg[1][0] * GRID_SPACING;
-            let y2 = OFFSET + seg[1][1] * GRID_SPACING;
-
+          solLines.forEach(l => {
             this.ctx.beginPath();
-            this.ctx.moveTo(x1, y1);
-            this.ctx.lineTo(x2, y2);
+            this.ctx.moveTo(OFFSET + l[0][0] * GRID_SPACING, OFFSET + l[0][1] * GRID_SPACING);
+            this.ctx.lineTo(OFFSET + l[1][0] * GRID_SPACING, OFFSET + l[1][1] * GRID_SPACING);
             this.ctx.stroke();
           });
-
-          this.ctx.globalAlpha = 1.0;
         }
 
-        // Student Lines
-        this.ctx.strokeStyle = '#000';
-        this.ctx.lineWidth = 3;
+        // User Drawn Lines
+        this.ctx.strokeStyle = '#2d3748';
+        this.ctx.lineWidth = 2.5;
         this.ctx.lineCap = 'round';
         this.lines.forEach(l => {
           this.ctx.beginPath();
@@ -833,44 +817,55 @@
           this.ctx.stroke();
         });
 
-        // Dynamic rubberband line
-        if (this.isDrawing) {
-          this.ctx.strokeStyle = '#0066cc';
+        // Active Preview Line
+        if (this.isDrawing && this.startPoint && this.currentPoint) {
+          this.ctx.strokeStyle = '#3182ce';
+          this.ctx.lineWidth = 2;
+          this.ctx.setLineDash([4, 4]);
           this.ctx.beginPath();
           this.ctx.moveTo(this.startPoint.x, this.startPoint.y);
           this.ctx.lineTo(this.currentPoint.x, this.currentPoint.y);
           this.ctx.stroke();
+          this.ctx.setLineDash([]);
         }
       }
     }
 
+    // --- 4. App Initialization & Validation Logic ---
     const topGrid = new DrawingGrid('topCanvas', 'top');
     const frontGrid = new DrawingGrid('frontCanvas', 'front');
     const rightGrid = new DrawingGrid('rightCanvas', 'right');
 
-    // --- 4. Solution Verification Engine ---
-    function normalizeSegment(p1, p2) {
-      if (p1.col < p2.col || (p1.col === p2.col && p1.row < p2.row)) {
-        return `${p1.col},${p1.row}-${p2.col},${p2.row}`;
-      }
-      return `${p2.col},${p2.row}-${p1.col},${p1.row}`;
+    function sameSegment(a1, a2, b1, b2) {
+      const match1 = (a1[0] === b1[0] && a1[1] === b1[1] && a2[0] === b2[0] && a2[1] === b2[1]);
+      const match2 = (a1[0] === b2[0] && a1[1] === b2[1] && a2[0] === b1[0] && a2[1] === b1[1]);
+      return match1 || match2;
     }
 
-    function breakIntoUnitSegments(p1, p2) {
-      let units = [];
-      let dx = Math.sign(p2.col - p1.col);
-      let dy = Math.sign(p2.row - p1.row);
-      let steps = Math.max(Math.abs(p2.col - p1.col), Math.abs(p2.row - p1.row));
+    function validateView(userLines, solutionLines) {
+      if (userLines.length !== solutionLines.length) return false;
 
-      for (let i = 0; i < steps; i++) {
-        let start = { col: p1.col + dx * i, row: p1.row + dy * i };
-        let end = { col: p1.col + dx * (i + 1), row: p1.row + dy * (i + 1) };
-        units.push(normalizeSegment(start, end));
+      let matched = new Array(solutionLines.length).fill(false);
+
+      for (let ul of userLines) {
+        let uPt1 = [ul.p1.col, ul.p1.row];
+        let uPt2 = [ul.p2.col, ul.p2.row];
+        let found = false;
+
+        for (let i = 0; i < solutionLines.length; i++) {
+          if (!matched[i] && sameSegment(uPt1, uPt2, solutionLines[i][0], solutionLines[i][1])) {
+            matched[i] = true;
+            found = true;
+            break;
+          }
+        }
+        if (!found) return false;
       }
-      return units;
+
+      return matched.every(m => m === true);
     }
 
-    function checkAnswer() {
+    function checkAnswers() {
       topGrid.showSolutionOverlay = true;
       frontGrid.showSolutionOverlay = true;
       rightGrid.showSolutionOverlay = true;
@@ -879,86 +874,60 @@
       frontGrid.render();
       rightGrid.render();
 
-      const targetSol = BLOCKS[currentBlockIdx].solution;
+      const sol = BLOCKS[currentBlockIdx].solution;
+      const topOk = validateView(topGrid.lines, sol.top);
+      const frontOk = validateView(frontGrid.lines, sol.front);
+      const rightOk = validateView(rightGrid.lines, sol.right);
 
-      const checkView = (userLines, targetLines) => {
-        let userSet = new Set();
-        userLines.forEach(l => {
-          let units = breakIntoUnitSegments(l.p1, l.p2);
-          units.forEach(u => userSet.add(u));
-        });
-
-        let targetSet = new Set();
-        targetLines.forEach(l => {
-          let p1 = { col: l[0][0], row: l[0][1] };
-          let p2 = { col: l[1][0], row: l[1][1] };
-          let units = breakIntoUnitSegments(p1, p2);
-          units.forEach(u => targetSet.add(u));
-        });
-
-        if (userSet.size !== targetSet.size) return false;
-        for (let seg of userSet) {
-          if (!targetSet.has(seg)) return false;
-        }
-        return true;
-      };
-
-      const topOk = checkView(topGrid.lines, targetSol.top);
-      const frontOk = checkView(frontGrid.lines, targetSol.front);
-      const rightOk = checkView(rightGrid.lines, targetSol.right);
-
-      const feedback = document.getElementById('feedback');
+      const feedbackEl = document.getElementById('feedback');
 
       if (topOk && frontOk && rightOk) {
-        feedback.style.color = '#2f855a';
-        feedback.innerText = '🎉 Correct! All views matched green guidelines.';
+        feedbackEl.style.color = '#38a169';
+        feedbackEl.textContent = '🎉 Excellent! All 3 orthographic views are correct!';
       } else {
-        feedback.style.color = '#c53030';
+        feedbackEl.style.color = '#e53e3e';
         let errors = [];
         if (!topOk) errors.push('Top');
         if (!frontOk) errors.push('Front');
         if (!rightOk) errors.push('Right');
-        feedback.innerText = '❌ Review green guide line(s) for: ' + errors.join(', ');
+        feedbackEl.textContent = `❌ Incorrect (${errors.join(', ')} View). Compare your lines to the green guide line overlay.`;
       }
     }
 
     function loadBlock(idx) {
       currentBlockIdx = idx;
-      document.getElementById('blockTitle').innerText = BLOCKS[currentBlockIdx].name;
-      
-      rotX = DEFAULT_ROT_X;
-      rotY = DEFAULT_ROT_Y;
-      
+      document.getElementById('blockTitle').textContent = BLOCKS[currentBlockIdx].name;
+      document.getElementById('feedback').textContent = '';
+
       topGrid.clear();
       frontGrid.clear();
       rightGrid.clear();
-      
-      document.getElementById('feedback').innerText = '';
+
       drawIsometricBlock();
     }
 
-    // Controls Logic
-    document.getElementById('checkBtn').addEventListener('click', checkAnswer);
-    
-    document.getElementById('nextBtn').addEventListener('click', () => {
-      let nextIdx = (currentBlockIdx + 1) % BLOCKS.length;
-      loadBlock(nextIdx);
-    });
-
-    document.getElementById('clearAllBtn').addEventListener('click', () => {
+    function clearAllDrawings() {
       topGrid.clear();
       frontGrid.clear();
       rightGrid.clear();
-      document.getElementById('feedback').innerText = '';
-    });
+      document.getElementById('feedback').textContent = '';
+    }
 
-    document.getElementById('resetCamBtn').addEventListener('click', () => {
+    function resetCamera() {
       rotX = DEFAULT_ROT_X;
       rotY = DEFAULT_ROT_Y;
       drawIsometricBlock();
-    });
+    }
 
-    // Initialize Tool
+    // Attach Main Controls
+    document.getElementById('checkBtn').addEventListener('click', checkAnswers);
+    document.getElementById('nextBtn').addEventListener('click', () => {
+      loadBlock((currentBlockIdx + 1) % BLOCKS.length);
+    });
+    document.getElementById('clearAllBtn').addEventListener('click', clearAllDrawings);
+    document.getElementById('resetCamBtn').addEventListener('click', resetCamera);
+
+    // Initial Load
     loadBlock(0);
   </script>
 </body>
