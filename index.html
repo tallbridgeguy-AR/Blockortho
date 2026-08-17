@@ -80,7 +80,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      width: 160px;
+      width: 180px;
       margin-bottom: 5px;
     }
     .grid-title {
@@ -165,7 +165,7 @@
 
       <div class="controls">
         <button id="checkBtn" class="main-btn check-btn">Check Answer</button>
-        <button id="nextBtn" class="main-btn next-btn">Next Block âž”</button>
+        <button id="nextBtn" class="main-btn next-btn">Next Block ➔</button>
         <button id="clearAllBtn" class="main-btn clear-btn">Clear Drawing</button>
         <button id="resetCamBtn" class="main-btn reset-cam-btn">Reset View</button>
       </div>
@@ -179,7 +179,7 @@
           <span class="grid-title" style="color: #2b6cb0;">Top View</span>
           <button class="mini-btn" onclick="topGrid.undo()">Undo</button>
         </div>
-        <canvas id="topCanvas" width="160" height="160"></canvas>
+        <canvas id="topCanvas" width="180" height="180"></canvas>
       </div>
 
       <!-- Instructions Panel -->
@@ -195,7 +195,7 @@
           <span class="grid-title" style="color: #c53030;">Front View</span>
           <button class="mini-btn" onclick="frontGrid.undo()">Undo</button>
         </div>
-        <canvas id="frontCanvas" width="160" height="160"></canvas>
+        <canvas id="frontCanvas" width="180" height="180"></canvas>
       </div>
 
       <!-- Right View -->
@@ -204,7 +204,7 @@
           <span class="grid-title" style="color: #d69e2e;">Right View</span>
           <button class="mini-btn" onclick="rightGrid.undo()">Undo</button>
         </div>
-        <canvas id="rightCanvas" width="160" height="160"></canvas>
+        <canvas id="rightCanvas" width="180" height="180"></canvas>
       </div>
     </div>
   </div>
@@ -225,18 +225,9 @@
           { pts: [[0,4,0], [0,4,2], [2,4,2], [2,4,0]], color: '#bee3f8' }
         ],
         solution: {
-          // Top View (Col 1->3, Row 1->5)
-          top: [
-            [[1,1],[3,1]], [[3,1],[3,5]], [[3,5],[1,5]], [[1,5],[1,1]], [[1,3],[3,3]]
-          ],
-          // Front View (Col 1->3, Row 1->5)
-          front: [
-            [[1,1],[3,1]], [[3,1],[3,5]], [[3,5],[1,5]], [[1,5],[1,1]], [[1,3],[3,3]]
-          ],
-          // Right View (Col 1->5, Row 1->5)
-          right: [
-            [[1,5],[5,5]], [[5,5],[5,1]], [[5,1],[3,1]], [[3,1],[3,3]], [[3,3],[1,3]], [[1,3],[1,5]]
-          ]
+          top: [[[1,1],[3,1]], [[3,1],[3,5]], [[3,5],[1,5]], [[1,5],[1,1]], [[1,3],[3,3]]],
+          front: [[[1,1],[3,1]], [[3,1],[3,5]], [[3,5],[1,5]], [[1,5],[1,1]], [[1,3],[3,3]]],
+          right: [[[1,5],[5,5]], [[5,5],[5,1]], [[5,1],[3,1]], [[3,1],[3,3]], [[3,3],[1,3]], [[1,3],[1,5]]]
         }
       },
       {
@@ -253,15 +244,9 @@
           { pts: [[2,2,2], [2,4,2], [2,4,0], [2,2,0]], color: '#fefcbf' }
         ],
         solution: {
-          top: [
-            [[1,1],[5,1]], [[5,1],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]], [[1,3],[5,3]], [[3,1],[3,3]]
-          ],
-          front: [
-            [[1,5],[5,5]], [[5,5],[5,3]], [[5,3],[3,3]], [[3,3],[3,1]], [[3,1],[1,1]], [[1,1],[1,5]], [[3,3],[5,3]]
-          ],
-          right: [
-            [[1,5],[5,5]], [[5,5],[5,1]], [[5,1],[3,1]], [[3,1],[3,3]], [[3,3],[1,3]], [[1,3],[1,5]]
-          ]
+          top: [[[1,1],[5,1]], [[5,1],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]], [[1,3],[5,3]], [[3,1],[3,3]]],
+          front: [[[1,5],[5,5]], [[5,5],[5,3]], [[5,3],[3,3]], [[3,3],[3,1]], [[3,1],[1,1]], [[1,1],[1,5]], [[3,3],[5,3]]],
+          right: [[[1,5],[5,5]], [[5,5],[5,1]], [[5,1],[3,1]], [[3,1],[3,3]], [[3,3],[1,3]], [[1,3],[1,5]]]
         }
       },
       {
@@ -280,22 +265,33 @@
           { pts: [[3,2,0], [3,2,4], [3,4,4], [3,4,0]], color: '#fefcbf' }
         ],
         solution: {
-          top: [
-            [[1,1],[5,1]], [[5,1],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]], [[2,1],[2,5]], [[4,1],[4,5]]
-          ],
-          front: [
-            [[1,1],[2,1]], [[2,1],[2,3]], [[2,3],[4,3]], [[4,3],[4,1]], [[4,1],[5,1]], [[5,1],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]]
-          ],
-          right: [
-            [[1,1],[5,1]], [[5,1],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]], [[1,3],[5,3]]
-          ]
+          top: [[[1,1],[5,1]], [[5,1],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]], [[2,1],[2,5]], [[4,1],[4,5]]],
+          front: [[[1,1],[2,1]], [[2,1],[2,3]], [[2,3],[4,3]], [[4,3],[4,1]], [[4,1],[5,1]], [[5,1],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]]],
+          right: [[[1,1],[5,1]], [[5,1],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]], [[1,3],[5,3]]]
+        }
+      },
+      {
+        name: "Block 4: Tall Notch Block",
+        rawPolygons: [
+          { pts: [[0,0,0], [4,0,0], [4,0,4], [0,0,4]], color: '#cbd5e0' },
+          { pts: [[0,0,0], [0,4,0], [4,4,0], [4,0,0]], color: '#a0aec0' },
+          { pts: [[0,0,0], [0,0,4], [0,4,4], [0,4,0]], color: '#e2e8f0' },
+          { pts: [[4,0,0], [4,4,0], [4,4,4], [4,0,4]], color: '#e2e8f0' },
+          { pts: [[0,0,4], [2,0,4], [2,4,4], [0,4,4]], color: '#feb2b2' },
+          { pts: [[2,0,2], [4,0,2], [4,4,2], [2,4,2]], color: '#feb2b2' },
+          { pts: [[2,0,2], [2,0,4], [2,4,4], [2,4,2]], color: '#bee3f8' }
+        ],
+        solution: {
+          top: [[[1,1],[5,1]], [[5,1],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]], [[3,1],[3,5]]],
+          front: [[[1,1],[3,1]], [[3,1],[3,3]], [[3,3],[5,3]], [[5,3],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]]],
+          right: [[[1,1],[5,1]], [[5,1],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]], [[1,3],[5,3]]]
         }
       }
     ];
 
     let currentBlockIdx = 0;
 
-    // --- 2. 3D Camera Engine ---
+    // --- 2. 3D Camera & Rendering Engine ---
     const isoCanvas = document.getElementById('isoCanvas');
     const isoCtx = isoCanvas.getContext('2d');
 
@@ -337,7 +333,7 @@
         isoCtx.stroke();
       }
 
-      // Vertical Back Grid Plane (Z = 0)
+      // Vertical Back Grid Plane
       for (let h = 0; h <= 4; h++) {
         let p1 = rotate3D(0, h, 0, rotX, rotY);
         let p2 = rotate3D(4, h, 0, rotX, rotY);
@@ -399,6 +395,7 @@
         }
       });
 
+      // Painter's algorithm sort for full opacity solids
       visiblePolys.sort((a, b) => a.avgZ - b.avgZ);
 
       visiblePolys.forEach(poly => {
@@ -408,6 +405,8 @@
           else isoCtx.lineTo(p.x, p.y);
         });
         isoCtx.closePath();
+        
+        // Solid surface rendering
         isoCtx.fillStyle = poly.color;
         isoCtx.fill();
         isoCtx.strokeStyle = '#1a202c';
@@ -420,9 +419,9 @@
 
     function drawViewLabels(cx, cy, scale) {
       const labels = [
-        { text: 'FRONT VIEW â†“', pos: [2, 0, 5.2], color: '#c53030' },
+        { text: 'FRONT VIEW ↓', pos: [2, 0, 5.2], color: '#c53030' },
         { text: 'TOP VIEW', pos: [2, 5.2, 2], color: '#2b6cb0' },
-        { text: 'â† RIGHT VIEW', pos: [5.2, 0, 2], color: '#d69e2e' }
+        { text: '← RIGHT VIEW', pos: [5.2, 0, 2], color: '#d69e2e' }
       ];
 
       isoCtx.font = 'bold 11px sans-serif';
@@ -481,11 +480,11 @@
     window.addEventListener('touchmove', moveCamDrag, { passive: false });
     window.addEventListener('touchend', endCamDrag, { passive: false });
 
-    // --- 3. Drawing Grid with Red Anchor Marker ---
-    const GRID_SPACING = 20;
+    // --- 3. Drawing Grid Engine with Dimension Indicators ---
+    const GRID_SPACING = 22;
     const GRID_ROWS = 7;
     const GRID_COLS = 7;
-    const OFFSET = 20;
+    const OFFSET = 24;
 
     class DrawingGrid {
       constructor(canvasId, viewType) {
@@ -561,17 +560,47 @@
       render() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-        // Dot Grid
+        // Persistent full measurement grid mesh
+        for (let r = 0; r < GRID_ROWS; r++) {
+          this.ctx.strokeStyle = '#e2e8f0';
+          this.ctx.lineWidth = 1;
+          this.ctx.beginPath();
+          this.ctx.moveTo(OFFSET, OFFSET + r * GRID_SPACING);
+          this.ctx.lineTo(OFFSET + (GRID_COLS - 1) * GRID_SPACING, OFFSET + r * GRID_SPACING);
+          this.ctx.stroke();
+        }
+        for (let c = 0; c < GRID_COLS; c++) {
+          this.ctx.strokeStyle = '#e2e8f0';
+          this.ctx.lineWidth = 1;
+          this.ctx.beginPath();
+          this.ctx.moveTo(OFFSET + c * GRID_SPACING, OFFSET);
+          this.ctx.lineTo(OFFSET + c * GRID_SPACING, OFFSET + (GRID_ROWS - 1) * GRID_SPACING);
+          this.ctx.stroke();
+        }
+
+        // Grid Intersection Dots
         for (let r = 0; r < GRID_ROWS; r++) {
           for (let c = 0; c < GRID_COLS; c++) {
             this.ctx.beginPath();
             this.ctx.arc(OFFSET + c * GRID_SPACING, OFFSET + r * GRID_SPACING, 2, 0, Math.PI * 2);
-            this.ctx.fillStyle = '#666';
+            this.ctx.fillStyle = '#a0aec0';
             this.ctx.fill();
           }
         }
 
-        // RED ANCHOR / START DOT (at Col 1, Row 5 - Bottom Left Corner of block)
+        // Measurement Grid Labels (X & Y scale coordinates)
+        this.ctx.font = '9px sans-serif';
+        this.ctx.fillStyle = '#718096';
+        this.ctx.textAlign = 'center';
+        for (let c = 0; c < GRID_COLS; c++) {
+          this.ctx.fillText(c, OFFSET + c * GRID_SPACING, OFFSET - 8);
+        }
+        this.ctx.textAlign = 'right';
+        for (let r = 0; r < GRID_ROWS; r++) {
+          this.ctx.fillText(r, OFFSET - 8, OFFSET + r * GRID_SPACING + 3);
+        }
+
+        // RED ANCHOR MARKER (At Col 1, Row 5 - Bottom Left)
         const anchorX = OFFSET + 1 * GRID_SPACING;
         const anchorY = OFFSET + 5 * GRID_SPACING;
 
@@ -582,9 +611,10 @@
 
         this.ctx.font = 'bold 9px sans-serif';
         this.ctx.fillStyle = '#e53e3e';
-        this.ctx.fillText("START", anchorX - 12, anchorY + 14);
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText("START", anchorX, anchorY + 14);
 
-        // Optional Solution Overlay in Green
+        // Solution Overlay in Green
         if (this.showSolutionOverlay) {
           const solutionLines = BLOCKS[currentBlockIdx].solution[this.viewType];
           this.ctx.strokeStyle = '#38a169';
@@ -607,7 +637,7 @@
           this.ctx.globalAlpha = 1.0;
         }
 
-        // Student Drawn Lines in Black
+        // Student Lines
         this.ctx.strokeStyle = '#000';
         this.ctx.lineWidth = 3;
         this.ctx.lineCap = 'round';
@@ -618,7 +648,7 @@
           this.ctx.stroke();
         });
 
-        // Rubberband preview line
+        // Dynamic rubberband drawing line
         if (this.isDrawing) {
           this.ctx.strokeStyle = '#0066cc';
           this.ctx.beginPath();
@@ -633,12 +663,27 @@
     const frontGrid = new DrawingGrid('frontCanvas', 'front');
     const rightGrid = new DrawingGrid('rightCanvas', 'right');
 
-    // --- 4. Verification & Navigation Engine ---
+    // --- 4. Segment Deconstruction & Verification Engine ---
     function normalizeSegment(p1, p2) {
       if (p1.col < p2.col || (p1.col === p2.col && p1.row < p2.row)) {
         return `${p1.col},${p1.row}-${p2.col},${p2.row}`;
       }
       return `${p2.col},${p2.row}-${p1.col},${p1.row}`;
+    }
+
+    // Breaks any multi-unit continuous segment into 1-unit atomic segments
+    function breakIntoUnitSegments(p1, p2) {
+      let units = [];
+      let dx = Math.sign(p2.col - p1.col);
+      let dy = Math.sign(p2.row - p1.row);
+      let steps = Math.max(Math.abs(p2.col - p1.col), Math.abs(p2.row - p1.row));
+
+      for (let i = 0; i < steps; i++) {
+        let start = { col: p1.col + dx * i, row: p1.row + dy * i };
+        let end = { col: p1.col + dx * (i + 1), row: p1.row + dy * (i + 1) };
+        units.push(normalizeSegment(start, end));
+      }
+      return units;
     }
 
     function checkAnswer() {
@@ -653,8 +698,19 @@
       const targetSol = BLOCKS[currentBlockIdx].solution;
 
       const checkView = (userLines, targetLines) => {
-        const userSet = new Set(userLines.map(l => normalizeSegment(l.p1, l.p2)));
-        const targetSet = new Set(targetLines.map(l => normalizeSegment({col: l[0][0], row: l[0][1]}, {col: l[1][0], row: l[1][1]})));
+        let userSet = new Set();
+        userLines.forEach(l => {
+          let units = breakIntoUnitSegments(l.p1, l.p2);
+          units.forEach(u => userSet.add(u));
+        });
+
+        let targetSet = new Set();
+        targetLines.forEach(l => {
+          let p1 = { col: l[0][0], row: l[0][1] };
+          let p2 = { col: l[1][0], row: l[1][1] };
+          let units = breakIntoUnitSegments(p1, p2);
+          units.forEach(u => targetSet.add(u));
+        });
 
         if (userSet.size !== targetSet.size) return false;
         for (let seg of userSet) {
@@ -671,14 +727,14 @@
 
       if (topOk && frontOk && rightOk) {
         feedback.style.color = '#2f855a';
-        feedback.innerText = 'ðŸŽ‰ Correct! All views matched green guidelines.';
+        feedback.innerText = '🎉 Correct! All views matched green guidelines.';
       } else {
         feedback.style.color = '#c53030';
         let errors = [];
         if (!topOk) errors.push('Top');
         if (!frontOk) errors.push('Front');
         if (!rightOk) errors.push('Right');
-        feedback.innerText = 'âŒ Review green guide line(s) for: ' + errors.join(', ');
+        feedback.innerText = '❌ Review green guide line(s) for: ' + errors.join(', ');
       }
     }
 
