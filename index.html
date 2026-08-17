@@ -338,9 +338,10 @@
 
 <script>
     const GRID_SIZE = 3;
-    const DOT_GRID_COUNT = 6; 
-    // The Red Dot marks bottom-left corner of the model projection space (c=1, r=5)
-    const START_DOT = { r: 5, c: 1 }; 
+    // 4x4 dots = 3x3 grid spaces
+    const DOT_ROWS = 3; // 0..3 (4 dots vertically)
+    const DOT_COLS = 3; // 0..3 (4 dots horizontally)
+    const START_DOT = { r: 3, c: 0 }; // Bottom-Left dot of 4x4 grid
 
     let scene, camera, renderer, modelGroup;
     let activeBlocks = []; 
@@ -576,17 +577,17 @@
         };
 
         activeBlocks.forEach(b => {
-            // TOP VIEW: x -> col, z -> row (front of model z=2 is at row 5)
+            // TOP VIEW: x -> col (0..2), z -> row (front of model z=2 maps to row 2)
             const topR = START_DOT.r - 1 - (2 - b.z);
             const topC = START_DOT.c + b.x;
             addSquare('top', topR, topC);
 
-            // FRONT VIEW: x -> col, y -> row (bottom y=0 is at row 5)
+            // FRONT VIEW: x -> col (0..2), y -> height (bottom y=0 maps to row 2)
             const frontR = START_DOT.r - 1 - b.y;
             const frontC = START_DOT.c + b.x;
             addSquare('front', frontR, frontC);
 
-            // RIGHT VIEW: z -> col (front z=2 mapped left-to-right), y -> row
+            // RIGHT VIEW: z -> col (front z=2 maps to col 2), y -> height (bottom y=0 maps to row 2)
             const rightR = START_DOT.r - 1 - b.y;
             const rightC = START_DOT.c + (2 - b.z);
             addSquare('right', rightR, rightC);
@@ -618,7 +619,6 @@
                 const endDot = getCanvasDotCoordinate(canvas, e);
 
                 if (endDot && (endDot.r !== activeDrawing.startDot.r || endDot.c !== activeDrawing.startDot.c)) {
-                    // Deconstruct long line segment drags into single grid-unit sub-segments
                     const segments = normalizeSegments(activeDrawing.startDot, endDot);
                     segments.forEach(seg => {
                         const line = canonicalLine(seg);
@@ -674,17 +674,19 @@
         const x = clientX - rect.left;
         const y = clientY - rect.top;
 
-        const spacing = canvas.width / (DOT_GRID_COUNT + 1);
+        const spacing = canvas.width / (DOT_COLS + 1.5);
+        const offsetX = spacing * 1.25;
+        const offsetY = spacing * 1.25;
 
-        const col = Math.round((x - spacing) / spacing);
-        const row = Math.round((y - spacing) / spacing);
+        const col = Math.round((x - offsetX) / spacing);
+        const row = Math.round((y - offsetY) / spacing);
 
-        if (row >= 0 && row <= DOT_GRID_COUNT && col >= 0 && col <= DOT_GRID_COUNT) {
-            const dotX = (col + 1) * spacing;
-            const dotY = (row + 1) * spacing;
+        if (row >= 0 && row <= DOT_ROWS && col >= 0 && col <= DOT_COLS) {
+            const dotX = offsetX + col * spacing;
+            const dotY = offsetY + row * spacing;
             const dist = Math.hypot(x - dotX, y - dotY);
 
-            if (dist < spacing * 0.4) {
+            if (dist < spacing * 0.45) {
                 return { r: row, c: col };
             }
         }
@@ -703,10 +705,12 @@
     }
 
     function getDotPixel(canvas, row, col) {
-        const spacing = canvas.width / (DOT_GRID_COUNT + 1);
+        const spacing = canvas.width / (DOT_COLS + 1.5);
+        const offsetX = spacing * 1.25;
+        const offsetY = spacing * 1.25;
         return {
-            x: (col + 1) * spacing,
-            y: (row + 1) * spacing
+            x: offsetX + col * spacing,
+            y: offsetY + row * spacing
         };
     }
 
@@ -715,30 +719,28 @@
         const ctx = canvas.getContext('2d');
         const width = canvas.width;
         const height = canvas.height;
-        const spacing = width / (DOT_GRID_COUNT + 1);
 
         ctx.clearRect(0, 0, width, height);
 
-        // Render dot grid
-        for (let r = 0; r <= DOT_GRID_COUNT; r++) {
-            for (let c = 0; c <= DOT_GRID_COUNT; c++) {
-                const x = (c + 1) * spacing;
-                const y = (r + 1) * spacing;
+        // Render 4x4 dot grid
+        for (let r = 0; r <= DOT_ROWS; r++) {
+            for (let c = 0; c <= DOT_COLS; c++) {
+                const pt = getDotPixel(canvas, r, c);
 
                 if (r === START_DOT.r && c === START_DOT.c) {
                     ctx.fillStyle = '#ef4444';
                     ctx.beginPath();
-                    ctx.arc(x, y, 6, 0, Math.PI * 2);
+                    ctx.arc(pt.x, pt.y, 6.5, 0, Math.PI * 2);
                     ctx.fill();
 
                     ctx.font = 'bold 9px sans-serif';
                     ctx.fillStyle = '#ef4444';
                     ctx.textAlign = 'center';
-                    ctx.fillText("START", x, y + 15);
+                    ctx.fillText("START", pt.x, pt.y + 15);
                 } else {
-                    ctx.fillStyle = '#cbd5e0';
+                    ctx.fillStyle = '#94a3b8';
                     ctx.beginPath();
-                    ctx.arc(x, y, 3.5, 0, Math.PI * 2);
+                    ctx.arc(pt.x, pt.y, 4, 0, Math.PI * 2);
                     ctx.fill();
                 }
             }
@@ -748,7 +750,7 @@
         if (activeDrawing && activeDrawing.view === view) {
             const startP = getDotPixel(canvas, activeDrawing.startDot.r, activeDrawing.startDot.c);
             ctx.strokeStyle = '#3b82f6';
-            ctx.lineWidth = 3;
+            ctx.lineWidth = 3.5;
             ctx.setLineDash([4, 4]);
             ctx.beginPath();
             ctx.moveTo(startP.x, startP.y);
@@ -762,7 +764,7 @@
             const p1 = getDotPixel(canvas, line.r1, line.c1);
             const p2 = getDotPixel(canvas, line.r2, line.c2);
 
-            ctx.lineWidth = 3.5;
+            ctx.lineWidth = 4;
             ctx.lineCap = 'round';
 
             if (showValidation) {
