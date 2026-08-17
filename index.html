@@ -652,9 +652,34 @@
 
       const targetSol = BLOCKS[currentBlockIdx].solution;
 
+      // Deconstruct any multi-unit segment into unit-length grid segments
+      const getUnitSegments = (lines) => {
+        const set = new Set();
+        lines.forEach(l => {
+          let p1 = l.p1 || { col: l[0][0], row: l[0][1] };
+          let p2 = l.p2 || { col: l[1][0], row: l[1][1] };
+          
+          let dx = Math.sign(p2.col - p1.col);
+          let dy = Math.sign(p2.row - p1.row);
+          let steps = Math.max(Math.abs(p2.col - p1.col), Math.abs(p2.row - p1.row));
+
+          let currCol = p1.col;
+          let currRow = p1.row;
+
+          for (let i = 0; i < steps; i++) {
+            let nextCol = currCol + dx;
+            let nextRow = currRow + dy;
+            set.add(normalizeSegment({col: currCol, row: currRow}, {col: nextCol, row: nextRow}));
+            currCol = nextCol;
+            currRow = nextRow;
+          }
+        });
+        return set;
+      };
+
       const checkView = (userLines, targetLines) => {
-        const userSet = new Set(userLines.map(l => normalizeSegment(l.p1, l.p2)));
-        const targetSet = new Set(targetLines.map(l => normalizeSegment({col: l[0][0], row: l[0][1]}, {col: l[1][0], row: l[1][1]})));
+        const userSet = getUnitSegments(userLines);
+        const targetSet = getUnitSegments(targetLines);
 
         if (userSet.size !== targetSet.size) return false;
         for (let seg of userSet) {
