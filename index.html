@@ -81,7 +81,16 @@
             background-color: #059669;
         }
 
-        /* GAME BAR STYLES */
+        button.danger {
+            background-color: #ef4444;
+            color: white;
+            border: none;
+        }
+
+        button.danger:hover {
+            background-color: #dc2626;
+        }
+
         .game-bar {
             display: flex;
             align-items: center;
@@ -141,7 +150,7 @@
 
         .workspace {
             display: grid;
-            grid-template-columns: 1fr 1.2fr;
+            grid-template-columns: 1fr 1.25fr;
             gap: 24px;
         }
 
@@ -181,12 +190,6 @@
             cursor: grabbing;
         }
 
-        canvas {
-            display: block;
-            width: 100%;
-            height: 100%;
-        }
-
         .instruction {
             font-size: 0.8rem;
             color: #718096;
@@ -197,7 +200,7 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             grid-template-rows: auto auto;
-            gap: 24px;
+            gap: 16px;
             margin-top: 12px;
         }
 
@@ -205,85 +208,59 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            background: #f8fafc;
+            border: 1px dashed #cbd5e0;
+            border-radius: 8px;
+            padding: 8px;
+        }
+
+        .view-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            margin-bottom: 6px;
+            padding: 0 4px;
         }
 
         .view-label {
-            font-size: 0.8rem;
+            font-size: 0.85rem;
             font-weight: 800;
-            color: #2d3748;
-            margin-bottom: 4px;
         }
 
-        .axis-hint-h {
-            font-size: 0.65rem;
-            font-weight: 700;
-            color: #718096;
-            display: flex;
-            justify-content: space-between;
-            width: 106px;
-            margin-bottom: 2px;
-        }
+        .view-label.top { color: #dd6b20; }
+        .view-label.front { color: #2b6cb0; }
+        .view-label.right { color: #276749; }
 
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(3, 34px);
-            grid-template-rows: repeat(3, 34px);
-            gap: 2px;
-            background-color: #a0aec0;
-            padding: 2px;
+        .btn-undo {
+            padding: 2px 8px;
+            font-size: 0.75rem;
+            background: #e2e8f0;
+            border: 1px solid #cbd5e0;
             border-radius: 4px;
-        }
-
-        .cell {
-            background-color: white;
-            cursor: pointer;
-            transition: all 0.15s ease;
-            position: relative;
-        }
-
-        .cell.active {
-            background-color: #3182ce;
-        }
-
-        .cell.correct {
-            background-color: #10b981 !important;
-        }
-
-        .cell.incorrect {
-            background-color: #ef4444 !important;
-        }
-
-        .cell.missed {
-            background-color: #fca5a5 !important;
-        }
-
-        .cell.solution-overlay::after {
-            content: '';
-            position: absolute;
-            top: 2px;
-            left: 2px;
-            right: 2px;
-            bottom: 2px;
-            border: 2px solid #2563eb;
-            background-color: rgba(37, 99, 235, 0.25);
-            pointer-events: none;
-            border-radius: 2px;
-        }
-
-        .overlay-check {
-            margin-top: 20px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.9rem;
             color: #4a5568;
-            user-select: none;
         }
 
-        .overlay-check input {
-            cursor: pointer;
-            width: 16px;
-            height: 16px;
+        .btn-undo:hover {
+            background: #cbd5e0;
+        }
+
+        .dot-canvas {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            cursor: crosshair;
+            touch-action: none;
+        }
+
+        .drawing-instructions {
+            font-size: 0.8rem;
+            color: #4a5568;
+            margin-bottom: 12px;
+            background: #f1f5f9;
+            padding: 8px 12px;
+            border-radius: 6px;
+            line-height: 1.4;
         }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -300,10 +277,9 @@
             </select>
             <button class="primary" id="btn-new">New Model</button>
             <button id="btn-reset">Reset View</button>
-            <button id="btn-clear">Clear Workspace</button>
+            <button class="danger" id="btn-clear">Clear Drawing</button>
             <button class="success" id="btn-check">Check Answer</button>
 
-            <!-- 1-MINUTE GAME MODE MODULE -->
             <div class="game-bar">
                 <button class="game-btn" id="btn-start-game">Start Game ⏱️</button>
                 <div class="game-stat">
@@ -322,39 +298,39 @@
         <div class="panel">
             <div class="panel-title">3D SOLID MODEL</div>
             <div id="canvas-container"></div>
-            <div class="instruction">💡 <strong>Click & drag</strong> (or touch & swipe) inside the 3D viewer to rotate and view all sides!</div>
+            <div class="instruction">💡 <strong>Click & drag</strong> inside the 3D viewer to rotate and view all sides!</div>
         </div>
 
         <div class="panel">
             <div class="panel-title">ORTHOGRAPHIC DRAWING WORKSPACE</div>
-            <p style="font-size: 0.82rem; color: #4a5568; margin-top: 0;">Click cells to shade projections. Axis hints show view orientation.</p>
-
-            <div class="grid-views">
-                <!-- TOP VIEW -->
-                <div class="view-box" style="grid-column: 1;">
-                    <div class="view-label">TOP VIEW</div>
-                    <div class="axis-hint-h"><span>← LEFT</span><span>RIGHT →</span></div>
-                    <div class="grid" id="grid-top"></div>
-                </div>
-
-                <!-- FRONT VIEW -->
-                <div class="view-box" style="grid-column: 1; grid-row: 2;">
-                    <div class="view-label">FRONT VIEW</div>
-                    <div class="axis-hint-h"><span>← LEFT</span><span>RIGHT →</span></div>
-                    <div class="grid" id="grid-front"></div>
-                </div>
-
-                <!-- RIGHT SIDE VIEW -->
-                <div class="view-box" style="grid-column: 2; grid-row: 2;">
-                    <div class="view-label">RIGHT SIDE VIEW</div>
-                    <div class="axis-hint-h"><span>← FRONT</span><span>BACK →</span></div>
-                    <div class="grid" id="grid-right"></div>
-                </div>
+            <div class="drawing-instructions">
+                Start drawing from the <strong>RED START DOT</strong> on each grid. Click dots or drag between dots to draw lines.
             </div>
 
-            <div class="overlay-check">
-                <input type="checkbox" id="chk-reveal">
-                <label for="chk-reveal">Reveal Solution Overlay</label>
+            <div class="grid-views">
+                <div class="view-box" style="grid-column: 1;">
+                    <div class="view-header">
+                        <span class="view-label top">TOP VIEW</span>
+                        <button class="btn-undo" onclick="undoLastLine('top')">Undo</button>
+                    </div>
+                    <canvas id="canvas-top" class="dot-canvas" width="220" height="220"></canvas>
+                </div>
+
+                <div class="view-box" style="grid-column: 1; grid-row: 2;">
+                    <div class="view-header">
+                        <span class="view-label front">FRONT VIEW</span>
+                        <button class="btn-undo" onclick="undoLastLine('front')">Undo</button>
+                    </div>
+                    <canvas id="canvas-front" class="dot-canvas" width="220" height="220"></canvas>
+                </div>
+
+                <div class="view-box" style="grid-column: 2; grid-row: 2;">
+                    <div class="view-header">
+                        <span class="view-label right">RIGHT VIEW</span>
+                        <button class="btn-undo" onclick="undoLastLine('right')">Undo</button>
+                    </div>
+                    <canvas id="canvas-right" class="dot-canvas" width="220" height="220"></canvas>
+                </div>
             </div>
         </div>
     </div>
@@ -362,35 +338,39 @@
 
 <script>
     const GRID_SIZE = 3;
+    const DOT_GRID_COUNT = 6; 
+    const START_DOT = { r: 5, c: 1 }; 
+
     let scene, camera, renderer, modelGroup;
     let activeBlocks = []; 
-    let solutionProjections = { top: [], front: [], right: [] };
     
-    let isDragging = false;
-    let previousPosition = { x: 0, y: 0 };
+    let userLines = { top: [], front: [], right: [] };
+    let expectedLines = { top: [], front: [], right: [] };
+    let showValidation = false;
+
+    let isDraggingModel = false;
+    let previousMousePosition = { x: 0, y: 0 };
     const defaultRotation = { x: 0.4, y: -0.6 };
 
-    // Game Mode State Variables
     let isGameActive = false;
     let gameScore = 0;
     let gameTimeRemaining = 60;
     let gameTimerInterval = null;
 
+    let activeDrawing = null; 
+
     const COLORS = [0x3182ce, 0xe53e3e, 0x38a169, 0xd69e2e, 0x805ad5, 0xdd6b20];
 
     window.addEventListener('DOMContentLoaded', () => {
         initThreeJS();
-        setupOrthographicGrids();
         setupTouchAndMouseEvents();
+        setupDrawingCanvases();
         generateNewSolidModel();
         
         document.getElementById('btn-new').addEventListener('click', generateNewSolidModel);
         document.getElementById('btn-reset').addEventListener('click', resetView);
-        document.getElementById('btn-clear').addEventListener('click', clearGrids);
+        document.getElementById('btn-clear').addEventListener('click', clearAllDrawings);
         document.getElementById('btn-check').addEventListener('click', checkAnswer);
-        document.getElementById('chk-reveal').addEventListener('change', toggleSolutionOverlay);
-        
-        // Game Button Handler
         document.getElementById('btn-start-game').addEventListener('click', toggleGameMode);
 
         window.addEventListener('resize', onWindowResize);
@@ -441,23 +421,23 @@
         };
 
         const startDrag = (e) => {
-            isDragging = true;
-            previousPosition = getCoord(e);
+            isDraggingModel = true;
+            previousMousePosition = getCoord(e);
         };
 
         const moveDrag = (e) => {
-            if (!isDragging) return;
+            if (!isDraggingModel) return;
             const current = getCoord(e);
-            const deltaX = current.x - previousPosition.x;
-            const deltaY = current.y - previousPosition.y;
+            const deltaX = current.x - previousMousePosition.x;
+            const deltaY = current.y - previousMousePosition.y;
 
             modelGroup.rotation.y += deltaX * 0.01;
             modelGroup.rotation.x += deltaY * 0.01;
 
-            previousPosition = current;
+            previousMousePosition = current;
         };
 
-        const stopDrag = () => { isDragging = false; };
+        const stopDrag = () => { isDraggingModel = false; };
 
         container.addEventListener('mousedown', startDrag);
         window.addEventListener('mousemove', moveDrag);
@@ -539,10 +519,8 @@
         modelGroup.add(floorGrid);
 
         createCleanLabels();
-        calculateSolutions();
-        clearGrids();
-        
-        document.getElementById('chk-reveal').checked = false;
+        calculateExpectedLines();
+        clearAllDrawings();
     }
 
     function createCleanLabels() {
@@ -579,44 +557,263 @@
         modelGroup.add(topSprite);
     }
 
-    function calculateSolutions() {
-        solutionProjections.top = Array(GRID_SIZE).fill(0).map(() => Array(GRID_SIZE).fill(false));
-        solutionProjections.front = Array(GRID_SIZE).fill(0).map(() => Array(GRID_SIZE).fill(false));
-        solutionProjections.right = Array(GRID_SIZE).fill(0).map(() => Array(GRID_SIZE).fill(false));
+    function calculateExpectedLines() {
+        expectedLines = { top: [], front: [], right: [] };
+
+        const addSegment = (view, r1, c1, r2, c2) => {
+            const line = canonicalLine({ r1, c1, r2, c2 });
+            if (!expectedLines[view].some(l => sameLine(l, line))) {
+                expectedLines[view].push(line);
+            }
+        };
+
+        const addSquare = (view, startR, startC) => {
+            addSegment(view, startR, startC, startR, startC + 1);
+            addSegment(view, startR, startC + 1, startR + 1, startC + 1);
+            addSegment(view, startR + 1, startC + 1, startR + 1, startC);
+            addSegment(view, startR + 1, startC, startR, startC);
+        };
 
         activeBlocks.forEach(b => {
-            solutionProjections.top[b.z][b.x] = true;
-            solutionProjections.front[2 - b.y][b.x] = true;
-            solutionProjections.right[2 - b.y][2 - b.z] = true;
+            // TOP VIEW: x -> column, z -> row (5-z)
+            const topR = START_DOT.r - 1 - b.z;
+            const topC = START_DOT.c + b.x;
+            addSquare('top', topR, topC);
+
+            // FRONT VIEW: x -> column, y -> height (5-y)
+            const frontR = START_DOT.r - 1 - b.y;
+            const frontC = START_DOT.c + b.x;
+            addSquare('front', frontR, frontC);
+
+            // RIGHT VIEW: z -> column (depth into screen), y -> height (5-y)
+            const rightR = START_DOT.r - 1 - b.y;
+            const rightC = START_DOT.c + (2 - b.z);
+            addSquare('right', rightR, rightC);
         });
     }
 
-    function setupOrthographicGrids() {
+    function setupDrawingCanvases() {
         ['top', 'front', 'right'].forEach(view => {
-            const gridEl = document.getElementById(`grid-${view}`);
-            gridEl.innerHTML = '';
-            for (let row = 0; row < GRID_SIZE; row++) {
-                for (let col = 0; col < GRID_SIZE; col++) {
-                    const cell = document.createElement('div');
-                    cell.className = 'cell';
-                    cell.dataset.row = row;
-                    cell.dataset.col = col;
-                    cell.dataset.view = view;
-                    cell.addEventListener('click', () => {
-                        cell.classList.toggle('active');
-                        cell.classList.remove('correct', 'incorrect', 'missed');
+            const canvas = document.getElementById(`canvas-${view}`);
+
+            const startDrawing = (e) => {
+                e.preventDefault();
+                const pt = getCanvasDotCoordinate(canvas, e);
+                if (pt) {
+                    activeDrawing = { view, startDot: pt, currentPos: getCanvasPixelCoordinate(canvas, e) };
+                }
+            };
+
+            const moveDrawing = (e) => {
+                if (!activeDrawing || activeDrawing.view !== view) return;
+                e.preventDefault();
+                activeDrawing.currentPos = getCanvasPixelCoordinate(canvas, e);
+                redrawCanvas(view);
+            };
+
+            const endDrawing = (e) => {
+                if (!activeDrawing || activeDrawing.view !== view) return;
+                e.preventDefault();
+                const endDot = getCanvasDotCoordinate(canvas, e);
+
+                if (endDot && (endDot.r !== activeDrawing.startDot.r || endDot.c !== activeDrawing.startDot.c)) {
+                    const line = canonicalLine({
+                        r1: activeDrawing.startDot.r,
+                        c1: activeDrawing.startDot.c,
+                        r2: endDot.r,
+                        c2: endDot.c
                     });
-                    gridEl.appendChild(cell);
+
+                    if (!userLines[view].some(l => sameLine(l, line))) {
+                        userLines[view].push(line);
+                    }
+                }
+
+                activeDrawing = null;
+                redrawCanvas(view);
+            };
+
+            canvas.addEventListener('mousedown', startDrawing);
+            canvas.addEventListener('mousemove', moveDrawing);
+            window.addEventListener('mouseup', endDrawing);
+
+            canvas.addEventListener('touchstart', startDrawing, { passive: false });
+            canvas.addEventListener('touchmove', moveDrawing, { passive: false });
+            canvas.addEventListener('touchend', endDrawing, { passive: false });
+
+            redrawCanvas(view);
+        });
+    }
+
+    function getCanvasDotCoordinate(canvas, e) {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+        const x = clientX - rect.left;
+        const y = clientY - rect.top;
+
+        const spacing = canvas.width / (DOT_GRID_COUNT + 1);
+
+        const col = Math.round((x - spacing) / spacing);
+        const row = Math.round((y - spacing) / spacing);
+
+        if (row >= 0 && row <= DOT_GRID_COUNT && col >= 0 && col <= DOT_GRID_COUNT) {
+            const dotX = (col + 1) * spacing;
+            const dotY = (row + 1) * spacing;
+            const dist = Math.hypot(x - dotX, y - dotY);
+
+            if (dist < spacing * 0.4) {
+                return { r: row, c: col };
+            }
+        }
+        return null;
+    }
+
+    function getCanvasPixelCoordinate(canvas, e) {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? (e.touches[0] || e.changedTouches[0]).clientX : e.clientX;
+        const clientY = e.touches ? (e.touches[0] || e.changedTouches[0]).clientY : e.clientY;
+
+        return {
+            x: clientX - rect.left,
+            y: clientY - rect.top
+        };
+    }
+
+    function getDotPixel(canvas, row, col) {
+        const spacing = canvas.width / (DOT_GRID_COUNT + 1);
+        return {
+            x: (col + 1) * spacing,
+            y: (row + 1) * spacing
+        };
+    }
+
+    function redrawCanvas(view) {
+        const canvas = document.getElementById(`canvas-${view}`);
+        const ctx = canvas.getContext('2d');
+        const width = canvas.width;
+        const height = canvas.height;
+        const spacing = width / (DOT_GRID_COUNT + 1);
+
+        ctx.clearRect(0, 0, width, height);
+
+        // Grid Dot Pattern & Labels
+        for (let r = 0; r <= DOT_GRID_COUNT; r++) {
+            for (let c = 0; c <= DOT_GRID_COUNT; c++) {
+                const x = (c + 1) * spacing;
+                const y = (r + 1) * spacing;
+
+                if (r === START_DOT.r && c === START_DOT.c) {
+                    ctx.fillStyle = '#ef4444';
+                    ctx.beginPath();
+                    ctx.arc(x, y, 6, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.font = 'bold 9px sans-serif';
+                    ctx.fillStyle = '#ef4444';
+                    ctx.textAlign = 'center';
+                    ctx.fillText("START", x, y + 15);
+                } else {
+                    ctx.fillStyle = '#cbd5e0';
+                    ctx.beginPath();
+                    ctx.arc(x, y, 3.5, 0, Math.PI * 2);
+                    ctx.fill();
                 }
             }
+        }
+
+        // Active line preview while dragging
+        if (activeDrawing && activeDrawing.view === view) {
+            const startP = getDotPixel(canvas, activeDrawing.startDot.r, activeDrawing.startDot.c);
+            ctx.strokeStyle = '#3b82f6';
+            ctx.lineWidth = 3;
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath();
+            ctx.moveTo(startP.x, startP.y);
+            ctx.lineTo(activeDrawing.currentPos.x, activeDrawing.currentPos.y);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        // Drawn Lines by user or validated color mode
+        userLines[view].forEach(line => {
+            const p1 = getDotPixel(canvas, line.r1, line.c1);
+            const p2 = getDotPixel(canvas, line.r2, line.c2);
+
+            ctx.lineWidth = 3.5;
+            ctx.lineCap = 'round';
+
+            if (showValidation) {
+                const isCorrect = expectedLines[view].some(el => sameLine(el, line));
+                ctx.strokeStyle = isCorrect ? '#10b981' : '#ef4444';
+            } else {
+                ctx.strokeStyle = '#1e293b';
+            }
+
+            ctx.beginPath();
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.stroke();
         });
     }
 
-    function clearGrids() {
-        document.querySelectorAll('.cell').forEach(c => {
-            c.className = 'cell';
+    function canonicalLine(l) {
+        if (l.r1 < l.r2 || (l.r1 === l.r2 && l.c1 <= l.c2)) {
+            return { r1: l.r1, c1: l.c1, r2: l.r2, c2: l.c2 };
+        }
+        return { r1: l.r2, c1: l.c2, r2: l.r1, c2: l.c1 };
+    }
+
+    function sameLine(l1, l2) {
+        const a = canonicalLine(l1);
+        const b = canonicalLine(l2);
+        return a.r1 === b.r1 && a.c1 === b.c1 && a.r2 === b.r2 && a.c2 === b.c2;
+    }
+
+    function undoLastLine(view) {
+        userLines[view].pop();
+        showValidation = false;
+        redrawCanvas(view);
+    }
+
+    function clearAllDrawings() {
+        userLines = { top: [], front: [], right: [] };
+        showValidation = false;
+        ['top', 'front', 'right'].forEach(redrawCanvas);
+    }
+
+    function checkAnswer() {
+        showValidation = true;
+        let isCompleteAndCorrect = true;
+
+        ['top', 'front', 'right'].forEach(view => {
+            redrawCanvas(view);
+
+            const u = userLines[view];
+            const e = expectedLines[view];
+
+            const matchesAllExpected = e.every(exp => u.some(usr => sameLine(exp, usr)));
+            const hasNoExtras = u.every(usr => e.some(exp => sameLine(usr, exp)));
+
+            if (!matchesAllExpected || !hasNoExtras) {
+                isCompleteAndCorrect = false;
+            }
         });
-        document.getElementById('chk-reveal').checked = false;
+
+        if (isCompleteAndCorrect) {
+            if (isGameActive) {
+                gameScore++;
+                document.getElementById('game-score').innerText = gameScore;
+                setTimeout(generateNewSolidModel, 400);
+            } else {
+                alert('🎉 Excellent! All orthographic projections are drawn correctly!');
+            }
+        } else {
+            if (!isGameActive) {
+                alert('❌ Not quite right yet!\n\n• Green lines = Correct\n• Red lines = Incorrect or extra lines');
+            }
+        }
     }
 
     function toggleGameMode() {
@@ -664,68 +861,6 @@
         gameBtn.innerText = "Start Game ⏱️";
         gameBtn.style.backgroundColor = "#d97706";
         document.getElementById('game-timer').classList.remove('timer-warning');
-    }
-
-    function checkAnswer() {
-        let allCorrect = true;
-
-        ['top', 'front', 'right'].forEach(view => {
-            const gridCells = document.querySelectorAll(`#grid-${view} .cell`);
-            gridCells.forEach(cell => {
-                const r = parseInt(cell.dataset.row);
-                const c = parseInt(cell.dataset.col);
-                const isSelected = cell.classList.contains('active');
-                const shouldBeSelected = solutionProjections[view][r][c];
-
-                cell.classList.remove('correct', 'incorrect', 'missed');
-
-                if (isSelected && shouldBeSelected) {
-                    cell.classList.add('correct');
-                } else if (isSelected && !shouldBeSelected) {
-                    cell.classList.add('incorrect');
-                    allCorrect = false;
-                } else if (!isSelected && shouldBeSelected) {
-                    cell.classList.add('missed');
-                    allCorrect = false;
-                }
-            });
-        });
-
-        if (allCorrect) {
-            if (isGameActive) {
-                gameScore++;
-                document.getElementById('game-score').innerText = gameScore;
-                
-                setTimeout(() => {
-                    generateNewSolidModel();
-                }, 400);
-            } else {
-                alert('🎉 Perfect! All views match correctly.');
-            }
-        } else {
-            if (!isGameActive) {
-                alert('❌ Not quite right yet!\n\n• Green = Correct\n• Red = Extra square\n• Light Red = Missed square');
-            }
-        }
-    }
-
-    function toggleSolutionOverlay(e) {
-        const isChecked = e.target.checked;
-
-        ['top', 'front', 'right'].forEach(view => {
-            const gridCells = document.querySelectorAll(`#grid-${view} .cell`);
-            gridCells.forEach(cell => {
-                const r = parseInt(cell.dataset.row);
-                const c = parseInt(cell.dataset.col);
-                const isSolutionCell = solutionProjections[view][r][c];
-
-                if (isChecked && isSolutionCell) {
-                    cell.classList.add('solution-overlay');
-                } else {
-                    cell.classList.remove('solution-overlay');
-                }
-            });
-        });
     }
 
     function onWindowResize() {
