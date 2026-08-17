@@ -2,75 +2,215 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Block Models Viewer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Orthographic Drawing Practice Tool</title>
   <style>
-    :root {
-      --bg-color: #f7fafc;
-      --card-bg: #ffffff;
-      --text-color: #2d3748;
-      --border-color: #e2e8f0;
-      --primary-color: #3182ce;
-    }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      background-color: var(--bg-color);
-      color: var(--text-color);
+    * {
+      box-sizing: border-box;
       margin: 0;
-      padding: 20px;
+      padding: 0;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
     }
-
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: #f4f6f8;
+      color: #333;
+      padding: 15px;
     }
-
     h1 {
       text-align: center;
-      margin-bottom: 24px;
+      margin-bottom: 15px;
+      font-size: 1.4rem;
     }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-      gap: 20px;
+    .app-container {
+      display: flex;
+      flex-direction: row;
+      gap: 15px;
+      max-width: 1050px;
+      margin: 0 auto;
     }
-
-    .card {
-      background: var(--card-bg);
-      border: 1px solid var(--border-color);
+    @media (max-width: 768px) {
+      .app-container {
+        flex-direction: column;
+        align-items: center;
+      }
+    }
+    .panel {
+      background: #ffffff;
+      border: 2px solid #333;
       border-radius: 8px;
-      padding: 16px;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      padding: 15px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     }
-
-    .card h2 {
-      font-size: 1.125rem;
-      margin-top: 0;
-      margin-bottom: 12px;
-      color: var(--primary-color);
+    .left-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
     }
-
-    pre {
-      background-color: #edf2f7;
-      padding: 12px;
-      border-radius: 6px;
-      overflow-x: auto;
+    .right-panel {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: 15px;
+      width: 100%;
+    }
+    canvas {
+      background-color: #fafafa;
+      border: 1px dashed #ccc;
+      border-radius: 4px;
+      touch-action: none; 
+    }
+    #isoCanvas {
+      cursor: grab;
+    }
+    #isoCanvas:active {
+      cursor: grabbing;
+    }
+    .grid-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .grid-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 160px;
+      margin-bottom: 5px;
+    }
+    .grid-title {
+      font-weight: bold;
+      text-transform: uppercase;
       font-size: 0.85rem;
-      max-height: 250px;
+      letter-spacing: 0.5px;
+    }
+    .mini-btn {
+      padding: 2px 6px;
+      background-color: #718096;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .mini-btn:hover {
+      background-color: #4a5568;
+    }
+    .controls {
+      margin-top: 15px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+    }
+    button.main-btn {
+      padding: 8px 14px;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+    .check-btn { background-color: #38a169; }
+    .check-btn:hover { background-color: #2f855a; }
+    .next-btn { background-color: #3182ce; }
+    .next-btn:hover { background-color: #2b6cb0; }
+    .clear-btn { background-color: #e53e3e; }
+    .clear-btn:hover { background-color: #c53030; }
+    .reset-cam-btn { background-color: #4a5568; }
+    .reset-cam-btn:hover { background-color: #2d3748; }
+    
+    #feedback {
+      margin-top: 10px;
+      font-weight: bold;
+      font-size: 0.9rem;
+      text-align: center;
+      min-height: 24px;
+    }
+
+    .scale-info {
+      background-color: #edf2f7;
+      border-radius: 6px;
+      padding: 6px 12px;
+      margin-top: 8px;
+      font-size: 0.8rem;
+      text-align: center;
+      color: #2d3748;
+      width: 100%;
     }
   </style>
 </head>
 <body>
 
-  <div class="container">
-    <h1>Block Models Database</h1>
-    <div id="block-container" class="grid"></div>
+  <h1>Orthographic Drawing Practice Tool</h1>
+
+  <div class="app-container">
+    <!-- Left Panel: Rotatable 3D Solid Reference -->
+    <div class="panel left-panel">
+      <div class="grid-title" id="blockTitle" style="margin-bottom: 5px;">Block 1: Step Block</div>
+      <canvas id="isoCanvas" width="320" height="280"></canvas>
+      
+      <div class="scale-info">
+        <strong>Scale:</strong> 1 Grid Square = 1 Unit Dimension
+      </div>
+
+      <div id="feedback"></div>
+
+      <div class="controls">
+        <button id="checkBtn" class="main-btn check-btn">Check Answer</button>
+        <button id="nextBtn" class="main-btn next-btn">Next Block âž”</button>
+        <button id="clearAllBtn" class="main-btn clear-btn">Clear Drawing</button>
+        <button id="resetCamBtn" class="main-btn reset-cam-btn">Reset View</button>
+      </div>
+    </div>
+
+    <!-- Right Panel: Orthographic Grids -->
+    <div class="panel right-panel">
+      <!-- Top View -->
+      <div class="grid-box">
+        <div class="grid-header">
+          <span class="grid-title" style="color: #2b6cb0;">Top View</span>
+          <button class="mini-btn" onclick="topGrid.undo()">Undo</button>
+        </div>
+        <canvas id="topCanvas" width="160" height="160"></canvas>
+      </div>
+
+      <!-- Instructions Panel -->
+      <div class="grid-box" style="justify-content: center; text-align: center; color: #555; font-size: 0.75rem;">
+        <p><strong>Instructions:</strong></p>
+        <p style="margin-top: 3px;">Start drawing from the <span style="color:#e53e3e; font-weight:bold;">RED START DOT</span> on each grid.</p>
+        <p style="margin-top: 3px;">Click <strong>Check Answer</strong> to reveal correct lines in <span style="color:#38a169; font-weight:bold;">GREEN</span>.</p>
+      </div>
+
+      <!-- Front View -->
+      <div class="grid-box">
+        <div class="grid-header">
+          <span class="grid-title" style="color: #c53030;">Front View</span>
+          <button class="mini-btn" onclick="frontGrid.undo()">Undo</button>
+        </div>
+        <canvas id="frontCanvas" width="160" height="160"></canvas>
+      </div>
+
+      <!-- Right View -->
+      <div class="grid-box">
+        <div class="grid-header">
+          <span class="grid-title" style="color: #d69e2e;">Right View</span>
+          <button class="mini-btn" onclick="rightGrid.undo()">Undo</button>
+        </div>
+        <canvas id="rightCanvas" width="160" height="160"></canvas>
+      </div>
+    </div>
   </div>
 
   <script>
-    // --- 1. Block Models Database (Fixed & Expanded to 10 Blocks) ---
+    // --- 1. Block Models Database ---
     const BLOCKS = [
       {
         name: "Block 1: Step Block",
@@ -85,9 +225,18 @@
           { pts: [[0,4,0], [0,4,2], [2,4,2], [2,4,0]], color: '#bee3f8' }
         ],
         solution: {
-          top: [[[1,1],[3,1]], [[3,1],[3,5]], [[3,5],[1,5]], [[1,5],[1,1]], [[1,3],[3,3]]],
-          front: [[[1,1],[3,1]], [[3,1],[3,5]], [[3,5],[1,5]], [[1,5],[1,1]], [[1,3],[3,3]]],
-          right: [[[1,5],[5,5]], [[5,5],[5,1]], [[5,1],[3,1]], [[3,1],[3,3]], [[3,3],[1,3]], [[1,3],[1,5]]]
+          // Top View (Col 1->3, Row 1->5)
+          top: [
+            [[1,1],[3,1]], [[3,1],[3,5]], [[3,5],[1,5]], [[1,5],[1,1]], [[1,3],[3,3]]
+          ],
+          // Front View (Col 1->3, Row 1->5)
+          front: [
+            [[1,1],[3,1]], [[3,1],[3,5]], [[3,5],[1,5]], [[1,5],[1,1]], [[1,3],[3,3]]
+          ],
+          // Right View (Col 1->5, Row 1->5)
+          right: [
+            [[1,5],[5,5]], [[5,5],[5,1]], [[5,1],[3,1]], [[3,1],[3,3]], [[3,3],[1,3]], [[1,3],[1,5]]
+          ]
         }
       },
       {
@@ -99,16 +248,20 @@
           { pts: [[4,0,0], [4,4,0], [4,4,2], [4,2,2], [4,2,4], [4,0,4]], color: '#e2e8f0' },
           { pts: [[0,0,4], [4,0,4], [4,2,4], [0,2,4]], color: '#feb2b2' },
           { pts: [[0,2,2], [2,2,2], [2,4,2], [0,4,2]], color: '#feb2b2' },
-          { pts: [[2,2,4], [4,2,4], [4,4,4], [2,4,4]], color: '#feb2b2' },
-          { pts: [[0,4,0], [0,4,2], [2,4,2], [2,4,0]], color: '#bee3f8' },
           { pts: [[2,2,2], [2,2,4], [4,2,4], [4,2,2]], color: '#bee3f8' },
-          { pts: [[2,2,2], [2,4,2], [2,4,0], [2,2,0]], color: '#fefcbf' },
-          { pts: [[2,2,2], [2,2,4], [2,4,4], [2,4,2]], color: '#fefcbf' }
+          { pts: [[0,4,0], [0,4,2], [2,4,2], [2,4,0]], color: '#bee3f8' },
+          { pts: [[2,2,2], [2,4,2], [2,4,0], [2,2,0]], color: '#fefcbf' }
         ],
         solution: {
-          top: [[[1,1],[5,1]], [[5,1],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]], [[1,3],[5,3]], [[3,1],[3,3]]],
-          front: [[[1,5],[5,5]], [[5,5],[5,3]], [[5,3],[3,3]], [[3,3],[3,1]], [[3,1],[1,1]], [[1,1],[1,5]], [[3,3],[5,3]]],
-          right: [[[1,5],[5,5]], [[5,5],[5,1]], [[5,1],[3,1]], [[3,1],[3,3]], [[3,3],[1,3]], [[1,3],[1,5]]]
+          top: [
+            [[1,1],[5,1]], [[5,1],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]], [[1,3],[5,3]], [[3,1],[3,3]]
+          ],
+          front: [
+            [[1,5],[5,5]], [[5,5],[5,3]], [[5,3],[3,3]], [[3,3],[3,1]], [[3,1],[1,1]], [[1,1],[1,5]], [[3,3],[5,3]]
+          ],
+          right: [
+            [[1,5],[5,5]], [[5,5],[5,1]], [[5,1],[3,1]], [[3,1],[3,3]], [[3,3],[1,3]], [[1,3],[1,5]]
+          ]
         }
       },
       {
@@ -127,137 +280,446 @@
           { pts: [[3,2,0], [3,2,4], [3,4,4], [3,4,0]], color: '#fefcbf' }
         ],
         solution: {
-          top: [[[1,1],[5,1]], [[5,1],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]], [[2,1],[2,5]], [[4,1],[4,5]]],
-          front: [[[1,1],[2,1]], [[2,1],[2,3]], [[2,3],[4,3]], [[4,3],[4,1]], [[4,1],[5,1]], [[5,1],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]]],
-          right: [[[1,1],[5,1]], [[5,1],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]], [[1,3],[5,3]]]
-        }
-      },
-      {
-        name: "Block 4: Column Tower Block",
-        rawPolygons: [
-          { pts: [[0,0,0], [4,0,0], [4,0,4], [0,0,4]], color: '#cbd5e0' },
-          { pts: [[0,0,0], [0,4,0], [4,4,0], [4,0,0]], color: '#a0aec0' },
-          { pts: [[0,0,0], [0,0,4], [0,2,4], [0,2,0]], color: '#e2e8f0' },
-          { pts: [[4,0,0], [4,4,0], [4,4,4], [4,0,4]], color: '#e2e8f0' },
-          { pts: [[0,0,2], [4,0,2], [4,2,2], [0,2,2]], color: '#feb2b2' },
-          { pts: [[2,0,4], [4,0,4], [4,2,4], [2,2,4]], color: '#feb2b2' },
-          { pts: [[0,2,0], [4,2,0], [4,2,2], [0,2,2]], color: '#bee3f8' },
-          { pts: [[2,2,2], [4,2,2], [4,2,4], [2,2,4]], color: '#bee3f8' }
-        ],
-        solution: {
-          top: [[[1,1],[5,1]], [[5,1],[5,3]], [[5,3],[3,3]], [[3,3],[3,5]], [[3,5],[1,5]], [[1,5],[1,1]]],
-          front: [[[1,3],[5,3]], [[5,3],[5,5]], [[5,5],[1,5]], [[1,5],[1,3]], [[3,1],[5,1]], [[3,1],[3,3]], [[5,1],[5,3]]],
-          right: [[[1,5],[5,5]], [[5,5],[5,3]], [[5,3],[3,3]], [[3,3],[3,1]], [[3,1],[1,1]], [[1,1],[1,5]]]
-        }
-      },
-      {
-        name: "Block 5: T-Block",
-        rawPolygons: [
-          { pts: [[0,0,0], [4,0,0], [4,0,2], [0,0,2]], color: '#cbd5e0' },
-          { pts: [[1,0,2], [3,0,2], [3,0,4], [1,0,4]], color: '#cbd5e0' },
-          { pts: [[0,0,0], [0,4,0], [4,4,0], [4,0,0]], color: '#a0aec0' },
-          { pts: [[0,0,0], [0,0,2], [0,4,2], [0,4,0]], color: '#e2e8f0' },
-          { pts: [[4,0,0], [4,4,0], [4,4,2], [4,0,2]], color: '#e2e8f0' },
-          { pts: [[0,0,2], [1,0,2], [1,4,2], [0,4,2]], color: '#feb2b2' },
-          { pts: [[3,0,2], [4,0,2], [4,4,2], [3,4,2]], color: '#feb2b2' },
-          { pts: [[1,0,4], [3,0,4], [3,4,4], [1,4,4]], color: '#feb2b2' },
-          { pts: [[0,4,0], [0,4,2], [1,4,2], [1,4,4], [3,4,4], [3,4,2], [4,4,2], [4,4,0]], color: '#bee3f8' }
-        ],
-        solution: {
-          top: [[[1,1],[5,1]], [[5,1],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]], [[2,1],[2,5]], [[4,1],[4,5]]],
-          front: [[[1,3],[5,3]], [[5,3],[5,5]], [[5,5],[1,5]], [[1,5],[1,3]], [[2,1],[4,1]], [[2,1],[2,3]], [[4,1],[4,3]]],
-          right: [[[1,1],[5,1]], [[5,1],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]], [[1,3],[5,3]]]
-        }
-      },
-      {
-        name: "Block 6: Center Pillar Block",
-        rawPolygons: [
-          { pts: [[0,0,0], [4,0,0], [4,0,4], [0,0,4]], color: '#cbd5e0' },
-          { pts: [[0,0,0], [0,4,0], [4,4,0], [4,0,0]], color: '#a0aec0' },
-          { pts: [[1,1,2], [3,1,2], [3,3,2], [1,3,2]], color: '#feb2b2' },
-          { pts: [[1,1,4], [3,1,4], [3,3,4], [1,3,4]], color: '#feb2b2' },
-          { pts: [[0,0,2], [4,0,2], [4,4,2], [0,4,2]], color: '#feb2b2' }
-        ],
-        solution: {
-          top: [[[1,1],[5,1]], [[5,1],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]], [[2,2],[4,2]], [[4,2],[4,4]], [[4,4],[2,4]], [[2,4],[2,2]]],
-          front: [[[1,3],[5,3]], [[5,3],[5,5]], [[5,5],[1,5]], [[1,5],[1,3]], [[2,1],[4,1]], [[2,1],[2,3]], [[4,1],[4,3]]],
-          right: [[[1,3],[5,3]], [[5,3],[5,5]], [[5,5],[1,5]], [[1,5],[1,3]], [[2,1],[4,1]], [[2,1],[2,3]], [[4,1],[4,3]]]
-        }
-      },
-      {
-        name: "Block 7: Double Step Block",
-        rawPolygons: [
-          { pts: [[0,0,0], [4,0,0], [4,0,4], [0,0,4]], color: '#cbd5e0' },
-          { pts: [[0,0,0], [0,4,0], [4,4,0], [4,0,0]], color: '#a0aec0' },
-          { pts: [[0,0,1], [4,0,1], [4,4,1], [0,4,1]], color: '#feb2b2' },
-          { pts: [[0,0,2], [4,0,2], [4,2,2], [0,2,2]], color: '#feb2b2' },
-          { pts: [[0,0,4], [4,0,4], [4,1,4], [0,1,4]], color: '#feb2b2' }
-        ],
-        solution: {
-          top: [[[1,1],[5,1]], [[5,1],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]], [[1,2],[5,2]], [[1,3],[5,3]]],
-          front: [[[1,1],[5,1]], [[5,1],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]], [[1,2],[5,2]], [[1,4],[5,4]]],
-          right: [[[1,5],[5,5]], [[5,5],[5,1]], [[5,1],[4,1]], [[4,1],[4,2]], [[4,2],[2,2]], [[2,2],[2,5]]]
-        }
-      },
-      {
-        name: "Block 8: Cross Platform",
-        rawPolygons: [
-          { pts: [[0,0,0], [4,0,0], [4,0,4], [0,0,4]], color: '#cbd5e0' },
-          { pts: [[0,0,0], [0,4,0], [4,4,0], [4,0,0]], color: '#a0aec0' },
-          { pts: [[0,0,2], [4,0,2], [4,4,2], [0,4,2]], color: '#feb2b2' }
-        ],
-        solution: {
-          top: [[[1,1],[5,1]], [[5,1],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]], [[2,1],[2,5]], [[4,1],[4,5]], [[1,2],[5,2]], [[1,4],[5,4]]],
-          front: [[[1,3],[5,3]], [[5,3],[5,5]], [[5,5],[1,5]], [[1,5],[1,3]], [[2,1],[4,1]], [[2,1],[2,3]], [[4,1],[4,3]]],
-          right: [[[1,3],[5,3]], [[5,3],[5,5]], [[5,5],[1,5]], [[1,5],[1,3]], [[2,1],[4,1]], [[2,1],[2,3]], [[4,1],[4,3]]]
-        }
-      },
-      {
-        name: "Block 9: Corner Notch Block",
-        rawPolygons: [
-          { pts: [[0,0,0], [4,0,0], [4,0,4], [0,0,4]], color: '#cbd5e0' },
-          { pts: [[0,0,0], [0,4,0], [4,4,0], [4,0,0]], color: '#a0aec0' },
-          { pts: [[0,0,4], [2,0,4], [2,2,4], [0,2,4]], color: '#feb2b2' },
-          { pts: [[2,2,2], [4,2,2], [4,4,2], [2,4,2]], color: '#feb2b2' }
-        ],
-        solution: {
-          top: [[[1,1],[5,1]], [[5,1],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]], [[1,3],[3,3]], [[3,1],[3,3]]],
-          front: [[[1,1],[3,1]], [[3,1],[3,3]], [[3,3],[5,3]], [[5,3],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]]],
-          right: [[[1,5],[5,5]], [[5,5],[5,3]], [[5,3],[3,3]], [[3,3],[3,1]], [[3,1],[1,1]], [[1,1],[1,5]]]
-        }
-      },
-      {
-        name: "Block 10: Pyramid Step Block",
-        rawPolygons: [
-          { pts: [[0,0,0], [4,0,0], [4,0,4], [0,0,4]], color: '#cbd5e0' },
-          { pts: [[0,0,0], [0,4,0], [4,4,0], [4,0,0]], color: '#a0aec0' },
-          { pts: [[0,0,1], [4,0,1], [4,4,1], [0,4,1]], color: '#feb2b2' },
-          { pts: [[1,1,3], [3,1,3], [3,3,3], [1,3,3]], color: '#feb2b2' }
-        ],
-        solution: {
-          top: [[[1,1],[5,1]], [[5,1],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]], [[2,2],[4,2]], [[4,2],[4,4]], [[4,4],[2,4]], [[2,4],[2,2]]],
-          front: [[[1,4],[5,4]], [[5,4],[5,5]], [[5,5],[1,5]], [[1,5],[1,4]], [[2,2],[4,2]], [[2,2],[2,4]], [[4,2],[4,4]]],
-          right: [[[1,4],[5,4]], [[5,4],[5,5]], [[5,5],[1,5]], [[1,5],[1,4]], [[2,2],[4,2]], [[2,2],[2,4]], [[4,2],[4,4]]]
+          top: [
+            [[1,1],[5,1]], [[5,1],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]], [[2,1],[2,5]], [[4,1],[4,5]]
+          ],
+          front: [
+            [[1,1],[2,1]], [[2,1],[2,3]], [[2,3],[4,3]], [[4,3],[4,1]], [[4,1],[5,1]], [[5,1],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]]
+          ],
+          right: [
+            [[1,1],[5,1]], [[5,1],[5,5]], [[5,5],[1,5]], [[1,5],[1,1]], [[1,3],[5,3]]
+          ]
         }
       }
     ];
 
-    // Render cards to the page
-    const container = document.getElementById('block-container');
-    BLOCKS.forEach((block) => {
-      const card = document.createElement('div');
-      card.className = 'card';
+    let currentBlockIdx = 0;
 
-      const title = document.createElement('h2');
-      title.textContent = block.name;
+    // --- 2. 3D Camera Engine ---
+    const isoCanvas = document.getElementById('isoCanvas');
+    const isoCtx = isoCanvas.getContext('2d');
 
-      const pre = document.createElement('pre');
-      pre.textContent = JSON.stringify(block, null, 2);
+    const DEFAULT_ROT_X = 0.45;
+    const DEFAULT_ROT_Y = -0.65;
+    let rotX = DEFAULT_ROT_X;
+    let rotY = DEFAULT_ROT_Y;
+    let isDraggingCam = false;
+    let lastMouseX = 0, lastMouseY = 0;
 
-      card.appendChild(title);
-      card.appendChild(pre);
-      container.appendChild(card);
+    function rotate3D(x, y, z, rx, ry) {
+      const cx = x - 2, cy = y - 2, cz = z - 2;
+      let x1 = cx * Math.cos(ry) + cz * Math.sin(ry);
+      let z1 = -cx * Math.sin(ry) + cz * Math.cos(ry);
+      let y1 = cy;
+      let y2 = y1 * Math.cos(rx) - z1 * Math.sin(rx);
+      let z2 = y1 * Math.sin(rx) + z1 * Math.cos(rx);
+      return { x: x1, y: y2, z: z2 };
+    }
+
+    function draw3DGrids(cx, cy, scale) {
+      isoCtx.lineWidth = 1;
+
+      // Base Floor Grid
+      for (let i = 0; i <= 4; i++) {
+        let p1 = rotate3D(i, 0, 0, rotX, rotY);
+        let p2 = rotate3D(i, 0, 4, rotX, rotY);
+        isoCtx.strokeStyle = '#cbd5e0';
+        isoCtx.beginPath();
+        isoCtx.moveTo(cx + p1.x * scale, cy - p1.y * scale);
+        isoCtx.lineTo(cx + p2.x * scale, cy - p2.y * scale);
+        isoCtx.stroke();
+
+        p1 = rotate3D(0, 0, i, rotX, rotY);
+        p2 = rotate3D(4, 0, i, rotX, rotY);
+        isoCtx.beginPath();
+        isoCtx.moveTo(cx + p1.x * scale, cy - p1.y * scale);
+        isoCtx.lineTo(cx + p2.x * scale, cy - p2.y * scale);
+        isoCtx.stroke();
+      }
+
+      // Vertical Back Grid Plane (Z = 0)
+      for (let h = 0; h <= 4; h++) {
+        let p1 = rotate3D(0, h, 0, rotX, rotY);
+        let p2 = rotate3D(4, h, 0, rotX, rotY);
+        isoCtx.strokeStyle = 'rgba(160, 174, 192, 0.4)';
+        isoCtx.beginPath();
+        isoCtx.moveTo(cx + p1.x * scale, cy - p1.y * scale);
+        isoCtx.lineTo(cx + p2.x * scale, cy - p2.y * scale);
+        isoCtx.stroke();
+      }
+
+      // Grid Dots
+      for (let x = 0; x <= 4; x++) {
+        for (let z = 0; z <= 4; z++) {
+          let p = rotate3D(x, 0, z, rotX, rotY);
+          isoCtx.beginPath();
+          isoCtx.arc(cx + p.x * scale, cy - p.y * scale, 2, 0, Math.PI * 2);
+          isoCtx.fillStyle = '#718096';
+          isoCtx.fill();
+        }
+      }
+    }
+
+    function computeNormal(pts) {
+      let v0 = pts[0], v1 = pts[1], v2 = pts[2];
+      let ax = v1[0] - v0[0], ay = v1[1] - v0[1], az = v1[2] - v0[2];
+      let bx = v2[0] - v0[0], by = v2[1] - v0[1], bz = v2[2] - v0[2];
+      return {
+        x: ay * bz - az * by,
+        y: az * bx - ax * bz,
+        z: ax * by - ay * bx
+      };
+    }
+
+    function drawIsometricBlock() {
+      isoCtx.clearRect(0, 0, isoCanvas.width, isoCanvas.height);
+      const cx = isoCanvas.width / 2;
+      const cy = isoCanvas.height / 2 + 10;
+      const scale = 28;
+
+      draw3DGrids(cx, cy, scale);
+
+      const model = BLOCKS[currentBlockIdx];
+      let visiblePolys = [];
+
+      model.rawPolygons.forEach(poly => {
+        let norm = computeNormal(poly.pts);
+        let rotNorm = rotate3D(norm.x + 2, norm.y + 2, norm.z + 2, rotX, rotY);
+        let originRot = rotate3D(2, 2, 2, rotX, rotY);
+        let viewNormZ = rotNorm.z - originRot.z;
+
+        if (viewNormZ > -0.01) {
+          let transformedPts = poly.pts.map(pt => {
+            let r = rotate3D(pt[0], pt[1], pt[2], rotX, rotY);
+            return { x: cx + r.x * scale, y: cy - r.y * scale, z: r.z };
+          });
+
+          let avgZ = transformedPts.reduce((sum, p) => sum + p.z, 0) / transformedPts.length;
+          visiblePolys.push({ pts: transformedPts, color: poly.color, avgZ: avgZ });
+        }
+      });
+
+      visiblePolys.sort((a, b) => a.avgZ - b.avgZ);
+
+      visiblePolys.forEach(poly => {
+        isoCtx.beginPath();
+        poly.pts.forEach((p, idx) => {
+          if (idx === 0) isoCtx.moveTo(p.x, p.y);
+          else isoCtx.lineTo(p.x, p.y);
+        });
+        isoCtx.closePath();
+        isoCtx.fillStyle = poly.color;
+        isoCtx.fill();
+        isoCtx.strokeStyle = '#1a202c';
+        isoCtx.lineWidth = 2;
+        isoCtx.stroke();
+      });
+
+      drawViewLabels(cx, cy, scale);
+    }
+
+    function drawViewLabels(cx, cy, scale) {
+      const labels = [
+        { text: 'FRONT VIEW â†“', pos: [2, 0, 5.2], color: '#c53030' },
+        { text: 'TOP VIEW', pos: [2, 5.2, 2], color: '#2b6cb0' },
+        { text: 'â† RIGHT VIEW', pos: [5.2, 0, 2], color: '#d69e2e' }
+      ];
+
+      isoCtx.font = 'bold 11px sans-serif';
+      isoCtx.textAlign = 'center';
+
+      labels.forEach(lbl => {
+        let p = rotate3D(lbl.pos[0], lbl.pos[1], lbl.pos[2], rotX, rotY);
+        let screenX = cx + p.x * scale;
+        let screenY = cy - p.y * scale;
+
+        isoCtx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+        let textWidth = isoCtx.measureText(lbl.text).width;
+        isoCtx.fillRect(screenX - textWidth/2 - 4, screenY - 10, textWidth + 8, 16);
+
+        isoCtx.fillStyle = lbl.color;
+        isoCtx.fillText(lbl.text, screenX, screenY + 2);
+      });
+    }
+
+    // Camera Controls
+    function startCamDrag(e) {
+      isDraggingCam = true;
+      let pos = getEventPos(e);
+      lastMouseX = pos.x;
+      lastMouseY = pos.y;
+    }
+
+    function moveCamDrag(e) {
+      if (!isDraggingCam) return;
+      let pos = getEventPos(e);
+      rotY += (pos.x - lastMouseX) * 0.01;
+      rotX += (pos.y - lastMouseY) * 0.01;
+      rotX = Math.max(-1.2, Math.min(1.2, rotX));
+      lastMouseX = pos.x;
+      lastMouseY = pos.y;
+      drawIsometricBlock();
+    }
+
+    function endCamDrag() { isDraggingCam = false; }
+
+    function getEventPos(e) {
+      let rect = isoCanvas.getBoundingClientRect();
+      let clientX = e.clientX, clientY = e.clientY;
+      if (e.touches && e.touches.length > 0) {
+        clientX = e.touches[0].clientX;
+        clientY = e.touches[0].clientY;
+      }
+      return { x: clientX - rect.left, y: clientY - rect.top };
+    }
+
+    isoCanvas.addEventListener('mousedown', startCamDrag);
+    window.addEventListener('mousemove', moveCamDrag);
+    window.addEventListener('mouseup', endCamDrag);
+
+    isoCanvas.addEventListener('touchstart', startCamDrag, { passive: false });
+    window.addEventListener('touchmove', moveCamDrag, { passive: false });
+    window.addEventListener('touchend', endCamDrag, { passive: false });
+
+    // --- 3. Drawing Grid with Red Anchor Marker ---
+    const GRID_SPACING = 20;
+    const GRID_ROWS = 7;
+    const GRID_COLS = 7;
+    const OFFSET = 20;
+
+    class DrawingGrid {
+      constructor(canvasId, viewType) {
+        this.canvas = document.getElementById(canvasId);
+        this.ctx = this.canvas.getContext('2d');
+        this.viewType = viewType;
+        this.lines = [];
+        this.showSolutionOverlay = false;
+        this.isDrawing = false;
+        this.startPoint = null;
+        this.currentPoint = null;
+
+        this.canvas.addEventListener('mousedown', this.start.bind(this));
+        this.canvas.addEventListener('mousemove', this.move.bind(this));
+        this.canvas.addEventListener('mouseup', this.end.bind(this));
+
+        this.canvas.addEventListener('touchstart', this.start.bind(this), { passive: false });
+        this.canvas.addEventListener('touchmove', this.move.bind(this), { passive: false });
+        this.canvas.addEventListener('touchend', this.end.bind(this), { passive: false });
+
+        this.render();
+      }
+
+      getPos(e) {
+        const rect = this.canvas.getBoundingClientRect();
+        let clientX = e.clientX, clientY = e.clientY;
+        if (e.touches && e.touches.length > 0) {
+          clientX = e.touches[0].clientX;
+          clientY = e.touches[0].clientY;
+        }
+
+        const col = Math.max(0, Math.min(GRID_COLS - 1, Math.round((clientX - rect.left - OFFSET) / GRID_SPACING)));
+        const row = Math.max(0, Math.min(GRID_ROWS - 1, Math.round((clientY - rect.top - OFFSET) / GRID_SPACING)));
+
+        return { col, row, x: OFFSET + col * GRID_SPACING, y: OFFSET + row * GRID_SPACING };
+      }
+
+      start(e) {
+        e.preventDefault();
+        this.startPoint = this.getPos(e);
+        this.currentPoint = this.startPoint;
+        this.isDrawing = true;
+      }
+
+      move(e) {
+        if (!this.isDrawing) return;
+        e.preventDefault();
+        this.currentPoint = this.getPos(e);
+        this.render();
+      }
+
+      end(e) {
+        if (this.isDrawing) {
+          if (this.startPoint.col !== this.currentPoint.col || this.startPoint.row !== this.currentPoint.row) {
+            this.lines.push({ p1: this.startPoint, p2: this.currentPoint });
+          }
+          this.isDrawing = false;
+          this.render();
+        }
+      }
+
+      undo() {
+        this.lines.pop();
+        this.render();
+      }
+
+      clear() {
+        this.lines = [];
+        this.showSolutionOverlay = false;
+        this.render();
+      }
+
+      render() {
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+        // Dot Grid
+        for (let r = 0; r < GRID_ROWS; r++) {
+          for (let c = 0; c < GRID_COLS; c++) {
+            this.ctx.beginPath();
+            this.ctx.arc(OFFSET + c * GRID_SPACING, OFFSET + r * GRID_SPACING, 2, 0, Math.PI * 2);
+            this.ctx.fillStyle = '#666';
+            this.ctx.fill();
+          }
+        }
+
+        // RED ANCHOR / START DOT (at Col 1, Row 5 - Bottom Left Corner of block)
+        const anchorX = OFFSET + 1 * GRID_SPACING;
+        const anchorY = OFFSET + 5 * GRID_SPACING;
+
+        this.ctx.beginPath();
+        this.ctx.arc(anchorX, anchorY, 5, 0, Math.PI * 2);
+        this.ctx.fillStyle = '#e53e3e';
+        this.ctx.fill();
+
+        this.ctx.font = 'bold 9px sans-serif';
+        this.ctx.fillStyle = '#e53e3e';
+        this.ctx.fillText("START", anchorX - 12, anchorY + 14);
+
+        // Optional Solution Overlay in Green
+        if (this.showSolutionOverlay) {
+          const solutionLines = BLOCKS[currentBlockIdx].solution[this.viewType];
+          this.ctx.strokeStyle = '#38a169';
+          this.ctx.lineWidth = 5;
+          this.ctx.lineCap = 'round';
+          this.ctx.globalAlpha = 0.5;
+
+          solutionLines.forEach(seg => {
+            let x1 = OFFSET + seg[0][0] * GRID_SPACING;
+            let y1 = OFFSET + seg[0][1] * GRID_SPACING;
+            let x2 = OFFSET + seg[1][0] * GRID_SPACING;
+            let y2 = OFFSET + seg[1][1] * GRID_SPACING;
+
+            this.ctx.beginPath();
+            this.ctx.moveTo(x1, y1);
+            this.ctx.lineTo(x2, y2);
+            this.ctx.stroke();
+          });
+
+          this.ctx.globalAlpha = 1.0;
+        }
+
+        // Student Drawn Lines in Black
+        this.ctx.strokeStyle = '#000';
+        this.ctx.lineWidth = 3;
+        this.ctx.lineCap = 'round';
+        this.lines.forEach(l => {
+          this.ctx.beginPath();
+          this.ctx.moveTo(l.p1.x, l.p1.y);
+          this.ctx.lineTo(l.p2.x, l.p2.y);
+          this.ctx.stroke();
+        });
+
+        // Rubberband preview line
+        if (this.isDrawing) {
+          this.ctx.strokeStyle = '#0066cc';
+          this.ctx.beginPath();
+          this.ctx.moveTo(this.startPoint.x, this.startPoint.y);
+          this.ctx.lineTo(this.currentPoint.x, this.currentPoint.y);
+          this.ctx.stroke();
+        }
+      }
+    }
+
+    const topGrid = new DrawingGrid('topCanvas', 'top');
+    const frontGrid = new DrawingGrid('frontCanvas', 'front');
+    const rightGrid = new DrawingGrid('rightCanvas', 'right');
+
+    // --- 4. Verification & Navigation Engine ---
+    function normalizeSegment(p1, p2) {
+      if (p1.col < p2.col || (p1.col === p2.col && p1.row < p2.row)) {
+        return `${p1.col},${p1.row}-${p2.col},${p2.row}`;
+      }
+      return `${p2.col},${p2.row}-${p1.col},${p1.row}`;
+    }
+
+    function checkAnswer() {
+      topGrid.showSolutionOverlay = true;
+      frontGrid.showSolutionOverlay = true;
+      rightGrid.showSolutionOverlay = true;
+
+      topGrid.render();
+      frontGrid.render();
+      rightGrid.render();
+
+      const targetSol = BLOCKS[currentBlockIdx].solution;
+
+      const checkView = (userLines, targetLines) => {
+        const userSet = new Set(userLines.map(l => normalizeSegment(l.p1, l.p2)));
+        const targetSet = new Set(targetLines.map(l => normalizeSegment({col: l[0][0], row: l[0][1]}, {col: l[1][0], row: l[1][1]})));
+
+        if (userSet.size !== targetSet.size) return false;
+        for (let seg of userSet) {
+          if (!targetSet.has(seg)) return false;
+        }
+        return true;
+      };
+
+      const topOk = checkView(topGrid.lines, targetSol.top);
+      const frontOk = checkView(frontGrid.lines, targetSol.front);
+      const rightOk = checkView(rightGrid.lines, targetSol.right);
+
+      const feedback = document.getElementById('feedback');
+
+      if (topOk && frontOk && rightOk) {
+        feedback.style.color = '#2f855a';
+        feedback.innerText = 'ðŸŽ‰ Correct! All views matched green guidelines.';
+      } else {
+        feedback.style.color = '#c53030';
+        let errors = [];
+        if (!topOk) errors.push('Top');
+        if (!frontOk) errors.push('Front');
+        if (!rightOk) errors.push('Right');
+        feedback.innerText = 'âŒ Review green guide line(s) for: ' + errors.join(', ');
+      }
+    }
+
+    function loadBlock(idx) {
+      currentBlockIdx = idx;
+      document.getElementById('blockTitle').innerText = BLOCKS[currentBlockIdx].name;
+      
+      rotX = DEFAULT_ROT_X;
+      rotY = DEFAULT_ROT_Y;
+      
+      topGrid.clear();
+      frontGrid.clear();
+      rightGrid.clear();
+      
+      document.getElementById('feedback').innerText = '';
+      drawIsometricBlock();
+    }
+
+    // Button Event Listeners
+    document.getElementById('checkBtn').addEventListener('click', checkAnswer);
+    
+    document.getElementById('nextBtn').addEventListener('click', () => {
+      let nextIdx = (currentBlockIdx + 1) % BLOCKS.length;
+      loadBlock(nextIdx);
     });
+
+    document.getElementById('clearAllBtn').addEventListener('click', () => {
+      topGrid.clear();
+      frontGrid.clear();
+      rightGrid.clear();
+      document.getElementById('feedback').innerText = '';
+    });
+
+    document.getElementById('resetCamBtn').addEventListener('click', () => {
+      rotX = DEFAULT_ROT_X;
+      rotY = DEFAULT_ROT_Y;
+      drawIsometricBlock();
+    });
+
+    // Initialize App
+    loadBlock(0);
   </script>
 </body>
 </html>
